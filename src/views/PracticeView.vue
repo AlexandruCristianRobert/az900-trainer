@@ -1,20 +1,21 @@
 <script setup lang="ts">
-import { computed, onUnmounted, ref, watch } from 'vue'
-import { onBeforeRouteLeave, RouterLink } from 'vue-router'
+import { computed, ref, watch } from 'vue'
+import { RouterLink } from 'vue-router'
 import QuestionCard from '@/components/QuestionCard.vue'
+import { usePracticeRunner } from '@/composables/usePracticeRunner'
 import type { DomainId, Question, TopicId } from '@/data/types'
 import { DOMAINS, TOPICS } from '@/data/types'
 import { shuffleInPlace } from '@/domain/examBlueprint'
-import { isCompleteSelection } from '@/domain/scoring'
-import { usePracticeStore } from '@/stores/practiceSession'
 import { useProgressStore } from '@/stores/progress'
 
 type Phase = 'setup' | 'question' | 'summary'
 
 const progress = useProgressStore()
-const practiceStore = usePracticeStore()
 
 const phase = ref<Phase>('setup')
+const runner = usePracticeRunner('practice', () => {
+  phase.value = 'summary'
+})
 
 // Setup filters.
 const domain = ref<DomainId | ''>('')
@@ -39,77 +40,16 @@ const matchingQuestions = computed<Question[]>(() =>
 )
 const matchCount = computed(() => matchingQuestions.value.length)
 
-// Question run.
-const queue = ref<Question[]>([])
-const index = ref(0)
-const correctCount = ref(0)
-const selected = ref<string[]>([])
-const graded = ref(false)
-const submitting = ref(false)
-
-const currentQuestion = computed<Question | null>(() => queue.value[index.value] ?? null)
-const isLastQuestion = computed(() => index.value >= queue.value.length - 1)
-const canCheck = computed(() => {
-  const question = currentQuestion.value
-  return question !== null && isCompleteSelection(question, selected.value)
-})
-const accuracyPercent = computed(() =>
-  queue.value.length === 0 ? 0 : Math.round((correctCount.value / queue.value.length) * 100),
-)
-
 function startPractice(): void {
   if (matchCount.value === 0) return
-  queue.value = shuffleInPlace([...matchingQuestions.value])
-  index.value = 0
-  correctCount.value = 0
-  selected.value = []
-  graded.value = false
-  practiceStore.begin('practice')
+  runner.start(shuffleInPlace([...matchingQuestions.value]))
   phase.value = 'question'
-}
-
-async function checkAnswer(): Promise<void> {
-  const question = currentQuestion.value
-  if (!question || submitting.value || !canCheck.value) return
-  submitting.value = true
-  try {
-    const answer = await practiceStore.submitAnswer(question, selected.value)
-    if (answer.correct) correctCount.value++
-    graded.value = true
-  } finally {
-    submitting.value = false
-  }
-}
-
-// Reaching the summary — like leaving the view — finishes the Session (idempotent).
-async function nextQuestion(): Promise<void> {
-  if (isLastQuestion.value) {
-    phase.value = 'summary'
-    await practiceStore.finish()
-    return
-  }
-  index.value++
-  selected.value = []
-  graded.value = false
 }
 
 function practiceAgain(): void {
   phase.value = 'setup'
-  queue.value = []
-  index.value = 0
-  correctCount.value = 0
-  selected.value = []
-  graded.value = false
+  runner.reset()
 }
-
-onBeforeRouteLeave(() => {
-  void practiceStore.finish()
-  return true
-})
-
-onUnmounted(() => {
-  void practiceStore.finish()
-})
 </script>
 
 <template>
@@ -148,33 +88,33 @@ onUnmounted(() => {
 
   <div v-else-if="phase === 'question'" class="practice-room">
     <div class="practice-bar">
-      <p class="practice-bar__position">Question {{ index + 1 }} of {{ queue.length }}</p>
-      <p class="practice-bar__tally mono">{{ correctCount }} correct so far</p>
+      <p class="practice-bar__position">Question {{ runner.index + 1 }} of {{ runner.queue.length }}</p>
+      <p class="practice-bar__tally mono">{{ runner.correctCount }} correct so far</p>
     </div>
 
     <main class="page">
       <div class="card practice-question">
         <QuestionCard
-          v-if="currentQuestion"
-          :key="currentQuestion.id"
-          :question="currentQuestion"
-          :model-value="selected"
-          :graded="graded"
+          v-if="runner.currentQuestion"
+          :key="runner.currentQuestion.id"
+          :question="runner.currentQuestion"
+          :model-value="runner.selected"
+          :graded="runner.graded"
           show-question-id
-          @update:model-value="selected = $event"
+          @update:model-value="runner.selected = $event"
         />
         <div class="practice-question__actions">
           <button
-            v-if="!graded"
+            v-if="!runner.graded"
             class="btn btn-primary"
             type="button"
-            :disabled="submitting || !canCheck"
-            @click="checkAnswer"
+            :disabled="runner.submitting || !runner.canCheck"
+            @click="runner.checkAnswer"
           >
             Check answer
           </button>
-          <button v-else class="btn btn-primary" type="button" @click="nextQuestion">
-            {{ isLastQuestion ? 'See summary' : 'Next question' }}
+          <button v-else class="btn btn-primary" type="button" @click="runner.nextQuestion">
+            {{ runner.isLastQuestion ? 'See summary' : 'Next question' }}
           </button>
         </div>
       </div>
@@ -184,8 +124,8 @@ onUnmounted(() => {
   <main v-else class="page">
     <div class="card summary">
       <h1>Summary</h1>
-      <p class="summary__score mono">{{ correctCount }} of {{ queue.length }} correct</p>
-      <p class="summary__accuracy">{{ accuracyPercent }}% accuracy</p>
+      <p class="summary__score mono">{{ runner.correctCount }} of {{ runner.queue.length }} correct</p>
+      <p class="summary__accuracy">{{ runner.accuracyPercent }}% accuracy</p>
       <div class="summary__actions">
         <button class="btn btn-ghost" type="button" @click="practiceAgain">Practice again</button>
         <RouterLink class="btn btn-primary" to="/">Back to dashboard</RouterLink>
