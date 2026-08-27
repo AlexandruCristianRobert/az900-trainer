@@ -1,85 +1,86 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
+import { computed, onMounted } from 'vue'
+import { RouterLink, RouterView, useRoute } from 'vue-router'
+import AppFooter from '@/components/AppFooter.vue'
+import { useProgressStore } from '@/stores/progress'
+
+const route = useRoute()
+const progress = useProgressStore()
+
+const isExamRoom = computed(() => route.name === 'exam')
+
+onMounted(() => {
+  void progress.init()
+})
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
+  <div class="app-shell">
+    <header class="app-bar">
+      <RouterLink to="/" class="wordmark">
+        <span class="wordmark__accent">AZ-900</span> Trainer
+      </RouterLink>
+      <nav v-if="!isExamRoom" class="app-nav" aria-label="Main">
+        <RouterLink to="/">Dashboard</RouterLink>
+        <RouterLink to="/practice">Practice</RouterLink>
+        <RouterLink to="/review">Review</RouterLink>
       </nav>
-    </div>
-  </header>
+    </header>
 
-  <RouterView />
+    <RouterView v-if="progress.ready" />
+    <p v-else class="loading">Loading…</p>
+
+    <AppFooter />
+  </div>
 </template>
 
 <style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.app-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
 }
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
 }
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
+.wordmark__accent {
+  color: var(--accent);
 }
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
+.app-nav {
+  display: flex;
+  gap: 1.25rem;
 }
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
+.app-nav a {
+  color: var(--ink-muted);
+  font-weight: 600;
+  text-decoration: none;
 }
 
-nav a:first-of-type {
-  border: 0;
+.app-nav a:hover,
+.app-nav a.router-link-active {
+  color: var(--accent);
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
-
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+.loading {
+  padding: 2rem 1.5rem;
+  color: var(--ink-muted);
 }
 </style>
