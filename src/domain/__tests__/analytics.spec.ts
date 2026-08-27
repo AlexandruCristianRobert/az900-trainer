@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { Question } from '@/data/types'
 import type { Answer, Session } from '@/domain/entities'
 import {
-  WEAK_AREA_ACCURACY_THRESHOLD,
-  WEAK_AREA_MIN_ANSWERS,
   domainStats,
   examHistory,
   latestAnswerByQuestion,
@@ -77,7 +75,7 @@ describe('analytics', () => {
       const question = bank[0]!
 
       // t1: submit wrong answer → should be in deck
-      let answers = [answerFor(question.id, '2026-08-01T00:00:00.000Z', false)]
+      const answers = [answerFor(question.id, '2026-08-01T00:00:00.000Z', false)]
       let deck = reviewDeck(bank, answers)
       let deckIds = new Set(deck.map((q) => q.id))
       expect(deckIds.has(question.id)).toBe(true) // wrong answer → in deck

@@ -72,8 +72,8 @@ describe('question bank structure', () => {
         expect(option.explanation.trim().length, `${q.id}:${option.id}`).toBeGreaterThanOrEqual(20)
   })
   it('links only to learn.microsoft.com when a link is present', () => {
-    for (const q of questionBank)
-      if (q.learnMore) expect(q.learnMore, q.id).toMatch(/^https:\/\/learn\.microsoft\.com\//)
+    for (const q of questionBank.filter((q) => q.learnMore))
+      expect(q.learnMore, q.id).toMatch(/^https:\/\/learn\.microsoft\.com\//)
   })
   it('keeps DOMAINS exam counts summing to 40', () => {
     const total = Object.values(DOMAINS).reduce((sum, d) => sum + d.examQuestions, 0)

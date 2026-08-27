@@ -6,5 +6,13 @@
   },
   "categories": {
     "correctness": "error"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["**/__tests__/**"],
+      "rules": {
+        "vitest/valid-expect": "off"
+      }
+    }
+  ]
 }

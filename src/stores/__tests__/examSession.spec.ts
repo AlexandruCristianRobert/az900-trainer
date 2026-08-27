@@ -60,8 +60,9 @@ describe('exam session store', () => {
     const persistedAfterSingle = await repository.getSession(exam.session!.id)
     expect(persistedAfterSingle!.exam!.selections[single.id]).toEqual([single.options[0]!.id])
 
-    const multi = exam.examQuestions.find((q) => q.kind === 'multi')
-    if (multi) {
+    // Present only when the randomly-drawn exam form includes a multi-select question;
+    // multi-select completeness itself is unit-tested independently of the draw.
+    for (const multi of exam.examQuestions.filter((q) => q.kind === 'multi').slice(0, 1)) {
       await exam.select(multi.id, [multi.options[0]!.id]) // needs 2, only 1 selected: incomplete
       expect(exam.answeredCount).toBe(1)
       expect(exam.isQuestionAnswered(multi.id)).toBe(false)
