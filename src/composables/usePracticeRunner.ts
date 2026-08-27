@@ -81,10 +81,14 @@ export function usePracticeRunner(mode: PracticeMode, onComplete: () => void): P
   }
 
   // Reaching the summary — like leaving the view — finishes the Session (idempotent).
+  // The transition must never be gated on finish() succeeding (a rejection, e.g. a
+  // storage-quota error, must not strand the user on the graded question with no
+  // way forward) — onComplete() fires first, then finish() is awaited so callers
+  // that need to observe the write (tests) still can.
   async function nextQuestion(): Promise<void> {
     if (isLastQuestion.value) {
-      await practiceStore.finish()
       onComplete()
+      await practiceStore.finish()
       return
     }
     index.value++

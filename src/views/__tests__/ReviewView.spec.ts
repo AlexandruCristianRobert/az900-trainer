@@ -95,6 +95,19 @@ async function answerCorrectly(wrapper: VueWrapper, question: Question): Promise
   }
 }
 
+/** Fills in a complete but wrong selection (works for single and multi). */
+async function answerIncorrectly(wrapper: VueWrapper, question: Question): Promise<void> {
+  const wrongOptions = question.options
+    .filter((o) => !question.correct.includes(o.id))
+    .slice(0, question.correct.length)
+  if (wrongOptions.length < question.correct.length) {
+    throw new Error(`Not enough incorrect options to answer ${question.id} wrongly`)
+  }
+  for (const option of wrongOptions) {
+    await wrapper.find(`#${question.id}-${option.id}`).setValue(true)
+  }
+}
+
 const MONITORING_TOOLS = questionBank.filter((q) => q.topic === 'monitoring-tools')
 
 describe('ReviewView', () => {
@@ -174,5 +187,38 @@ describe('ReviewView', () => {
     expect(wrapper.text()).toContain('Question 2 of 2')
     const shownSecond = questionById(wrapper.find('.question-card__id').text())
     expect(shownSecond.id).not.toBe(shownFirst.id)
+  })
+
+  it('(d) "Review again" restarts over the live deck and opens a new review session', async () => {
+    const question = MONITORING_TOOLS[0]!
+    await seedIncorrectAnswer(question)
+
+    const { wrapper } = await mountReviewRoute()
+
+    expect(wrapper.text()).toContain('Question 1 of 1')
+
+    // Answered wrong: the Question stays in the deck once this run finishes.
+    await answerIncorrectly(wrapper, question)
+    await findButton(wrapper, 'Check answer').trigger('click')
+    await settle()
+    await findButton(wrapper, 'See summary').trigger('click')
+    await settle()
+
+    expect(wrapper.text()).toContain('1 still in your review deck')
+    let sessions = await repository.getSessions()
+    expect(sessions.filter((s) => s.mode === 'review')).toHaveLength(1)
+
+    await findButton(wrapper, 'Review again').trigger('click')
+    await settle()
+
+    // A fresh run over the still-live (1-question) deck, independent of the run just finished.
+    expect(wrapper.text()).toContain('Question 1 of 1')
+
+    await answerCorrectly(wrapper, question)
+    await findButton(wrapper, 'Check answer').trigger('click')
+    await settle()
+
+    sessions = await repository.getSessions()
+    expect(sessions.filter((s) => s.mode === 'review')).toHaveLength(2)
   })
 })
