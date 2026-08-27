@@ -54,6 +54,21 @@ describe('analytics', () => {
       expect(latest.get('q1')!.submittedAt).toBe('2026-08-01T00:01:00.000Z')
       expect(latest.get('q2')!.submittedAt).toBe('2026-08-01T00:00:00.000Z')
     })
+
+    it('breaks a tie on identical submittedAt by array position (later entry wins)', () => {
+      const tie = '2026-08-01T00:00:00.000Z'
+      const earlier = answerFor('q1', tie, false)
+      const later = answerFor('q1', tie, true)
+
+      const latest = latestAnswerByQuestion([earlier, later])
+      expect(latest.get('q1')!.id).toBe(later.id)
+      expect(latest.get('q1')!.correct).toBe(true)
+
+      // Mirrored order: the array's later entry still wins, even though both share submittedAt.
+      const latestReversed = latestAnswerByQuestion([later, earlier])
+      expect(latestReversed.get('q1')!.id).toBe(earlier.id)
+      expect(latestReversed.get('q1')!.correct).toBe(false)
+    })
   })
 
   describe('reviewDeck (case a)', () => {
@@ -78,6 +93,26 @@ describe('analytics', () => {
       deck = reviewDeck(bank, answers)
       deckIds = new Set(deck.map((q) => q.id))
       expect(deckIds.has(question.id)).toBe(true) // wrong answer (latest) → back in deck
+    })
+
+    it('same-millisecond submittedAt: deck membership follows array position, not just the timestamp', () => {
+      const bank = makeBank()
+      const question = bank[0]!
+      const tie = '2026-08-01T00:00:00.000Z'
+
+      // earlier=incorrect, later=correct (identical submittedAt) → the correct one is "latest" → NOT in deck.
+      const outOfDeck = reviewDeck(bank, [
+        answerFor(question.id, tie, false),
+        answerFor(question.id, tie, true),
+      ])
+      expect(outOfDeck.some((q) => q.id === question.id)).toBe(false)
+
+      // Mirrored: earlier=correct, later=incorrect (identical submittedAt) → in deck.
+      const inDeck = reviewDeck(bank, [
+        answerFor(question.id, tie, true),
+        answerFor(question.id, tie, false),
+      ])
+      expect(inDeck.some((q) => q.id === question.id)).toBe(true)
     })
   })
 
