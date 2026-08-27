@@ -147,6 +147,14 @@ describe('ResultsView', () => {
     expect(unansweredRow!.find('.chip').text()).toBe('Unanswered')
     expect(unansweredRow!.find('.chip').classes()).toContain('chip--muted')
 
+    // Expanding it shows the same verdict inside the QuestionCard — never "Incorrect".
+    await unansweredRow!.find('.question-row__summary').trigger('click')
+    const unansweredDetail = unansweredRow!.find('.question-row__detail')
+    expect(unansweredDetail.find('.question-card__verdict').text()).toBe('Unanswered')
+    expect(unansweredDetail.find('.question-card__verdict--muted').exists()).toBe(true)
+    // Collapse it again — only one row's detail is asserted expanded below.
+    await unansweredRow!.find('.question-row__summary').trigger('click')
+
     expect(danglingRow!.find('.question-row__summary').exists()).toBe(false)
     expect(danglingRow!.text()).toContain('This question was removed from the bank.')
 

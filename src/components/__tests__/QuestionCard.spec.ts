@@ -181,6 +181,17 @@ describe('QuestionCard graded state', () => {
     )
   })
 
+  it('shows an Unanswered verdict, not Incorrect, when the selection is empty', () => {
+    const wrapper = mount(QuestionCard, {
+      props: { question: single, modelValue: [], graded: true },
+    })
+    expect(wrapper.find('.question-card__verdict').text()).toBe('Unanswered')
+    expect(wrapper.find('.question-card__verdict').classes()).toContain(
+      'question-card__verdict--muted',
+    )
+    expect(wrapper.text()).not.toContain('Incorrect')
+  })
+
   it('renders a Learn More link only when graded and learnMore is present', () => {
     const withLink = mount(QuestionCard, {
       props: { question: single, modelValue: ['b'], graded: true },

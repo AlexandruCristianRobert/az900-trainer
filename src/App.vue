@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import AppFooter from '@/components/AppFooter.vue'
 import { useProgressStore } from '@/stores/progress'
@@ -8,9 +8,12 @@ const route = useRoute()
 const progress = useProgressStore()
 
 const isExamRoom = computed(() => route.name === 'exam')
+const initFailed = ref(false)
 
 onMounted(() => {
-  void progress.init()
+  void progress.init().catch(() => {
+    initFailed.value = true
+  })
 })
 </script>
 
@@ -28,6 +31,9 @@ onMounted(() => {
     </header>
 
     <RouterView v-if="progress.ready" />
+    <p v-else-if="initFailed" class="loading">
+      Couldn't load your data. Try reloading, or clear this site's storage.
+    </p>
     <p v-else class="loading">Loading…</p>
 
     <AppFooter />

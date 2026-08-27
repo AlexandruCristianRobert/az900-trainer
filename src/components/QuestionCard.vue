@@ -25,6 +25,15 @@ const domainDotModifier = computed(() => DOMAIN_DOT_MODIFIER[props.question.doma
 const topicLabel = computed(() => TOPICS[props.question.topic].label)
 const radioName = computed(() => `option-${props.question.id}`)
 const verdictIsCorrect = computed(() => isCorrect(props.question, props.modelValue))
+/** Unanswered is its own verdict — an empty Selection never grades as "Incorrect". */
+const verdictLabel = computed(() => {
+  if (props.modelValue.length === 0) return 'Unanswered'
+  return verdictIsCorrect.value ? 'Correct' : 'Incorrect'
+})
+const verdictModifier = computed(() => {
+  if (props.modelValue.length === 0) return 'question-card__verdict--muted'
+  return verdictIsCorrect.value ? 'question-card__verdict--pass' : 'question-card__verdict--fail'
+})
 
 function optionInputId(optionId: string): string {
   return `${props.question.id}-${optionId}`
@@ -82,12 +91,8 @@ function onCheckboxChange(optionId: string, event: Event): void {
 
     <legend class="question-card__stem">{{ question.stem }}</legend>
 
-    <p
-      v-if="graded"
-      class="question-card__verdict"
-      :class="verdictIsCorrect ? 'question-card__verdict--pass' : 'question-card__verdict--fail'"
-    >
-      {{ verdictIsCorrect ? 'Correct' : 'Incorrect' }}
+    <p v-if="graded" class="question-card__verdict" :class="verdictModifier">
+      {{ verdictLabel }}
     </p>
 
     <div class="question-card__options">
@@ -196,6 +201,10 @@ function onCheckboxChange(optionId: string, event: Event): void {
 
 .question-card__verdict--fail {
   color: var(--fail);
+}
+
+.question-card__verdict--muted {
+  color: var(--ink-muted);
 }
 
 .question-card__options {

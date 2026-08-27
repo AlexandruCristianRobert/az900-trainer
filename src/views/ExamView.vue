@@ -8,6 +8,13 @@ import { EXAM_DURATION_MS, EXAM_QUESTION_COUNT, PASS_LINE } from '@/domain/examB
 import { useExamStore } from '@/stores/examSession'
 
 const CONFIRM_WINDOW_MS = 5000
+/**
+ * A double-click lands its second click on whatever now occupies those pixels —
+ * and Vue swaps the confirm button in on a microtask, long before the ~100-200ms
+ * second click arrives. Clicks this soon after arming are the tail of a
+ * double-click, never a deliberate confirmation, so the guard drops them.
+ */
+const CONFIRM_GRACE_MS = 400
 const EXAM_SUMMARY = `${EXAM_QUESTION_COUNT} questions · ${EXAM_DURATION_MS / 60_000} minutes · pass line ${PASS_LINE}`
 
 const router = useRouter()
@@ -16,6 +23,7 @@ const examStore = useExamStore()
 const starting = ref(false)
 const ending = ref(false)
 const pendingAction = ref<'finish' | 'abandon' | null>(null)
+let armedAtMs = 0
 let confirmTimeoutId: ReturnType<typeof setTimeout> | undefined
 
 /** Non-null exactly while an exam is in progress — the exam room is its own state. */
@@ -52,6 +60,7 @@ function disarmConfirm(): void {
 function armConfirm(action: 'finish' | 'abandon'): void {
   clearTimeout(confirmTimeoutId)
   pendingAction.value = action
+  armedAtMs = Date.now()
   confirmTimeoutId = setTimeout(disarmConfirm, CONFIRM_WINDOW_MS)
 }
 
@@ -72,6 +81,7 @@ async function requestFinish(): Promise<void> {
     armConfirm('finish')
     return
   }
+  if (Date.now() - armedAtMs < CONFIRM_GRACE_MS) return
   await endExam(() => examStore.submitExam())
 }
 
@@ -80,6 +90,7 @@ async function requestAbandon(): Promise<void> {
     armConfirm('abandon')
     return
   }
+  if (Date.now() - armedAtMs < CONFIRM_GRACE_MS) return
   await endExam(() => examStore.abandonExam())
 }
 

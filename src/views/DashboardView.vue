@@ -235,6 +235,9 @@ async function confirmReset(): Promise<void> {
           <RouterLink class="btn btn-primary" to="/exam">Start exam</RouterLink>
           <RouterLink class="btn btn-ghost" to="/practice">Practice by topic</RouterLink>
         </div>
+        <p class="hero__caption">
+          Estimated score — Microsoft uses an unpublished scaled model.
+        </p>
       </template>
     </section>
 
@@ -443,6 +446,17 @@ async function confirmReset(): Promise<void> {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+/*
+ * A full-width row, not tucked under hero__text: it sits at the bottom edge of
+ * the hero card, right above the Score history panel it also speaks for.
+ */
+.hero__caption {
+  flex-basis: 100%;
+  margin: 0.5rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
 }
 
 /*

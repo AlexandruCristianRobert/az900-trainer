@@ -105,6 +105,10 @@ export const useProgressStore = defineStore('progress', () => {
     if (!isExportedProgress(parsed)) throw new Error('Invalid progress file')
 
     await repository.replaceAll(parsed.sessions, parsed.answers)
+    // Same lazy finalization init runs at load: an imported in-progress exam
+    // that's already past its deadline is expired immediately, not left stale
+    // until the next full app load.
+    await sweepStrandedSessions()
     await reloadCaches()
     ready.value = true
   }

@@ -26,6 +26,11 @@ describe('isCorrect', () => {
     expect(isCorrect(multi, ['a', 'b'])).toBe(false)
     expect(isCorrect(multi, ['a', 'b', 'c'])).toBe(false)
   })
+  it('rejects a duplicated id padding the count out to a false match', () => {
+    // 'a' is one of the two correct options, but repeated it only covers one
+    // distinct option — never a legitimate 2-of-2 pick.
+    expect(isCorrect(multi, ['a', 'a'])).toBe(false)
+  })
 })
 
 describe('isCompleteSelection', () => {
@@ -34,6 +39,9 @@ describe('isCompleteSelection', () => {
     expect(isCompleteSelection(single, ['a'])).toBe(true)
     expect(isCompleteSelection(multi, ['a'])).toBe(false)
     expect(isCompleteSelection(multi, ['a', 'b'])).toBe(true)
+  })
+  it('treats a duplicated id as incomplete, not a legitimate full pick', () => {
+    expect(isCompleteSelection(multi, ['a', 'a'])).toBe(false)
   })
 })
 

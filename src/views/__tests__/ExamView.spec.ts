@@ -123,9 +123,10 @@ describe('ExamView', () => {
     expect(hasButton(wrapper, 'Confirm finish')).toBe(false)
     expect(exam.session?.status).toBe('in-progress')
 
-    // Arm, then confirm.
+    // Arm, then confirm — well clear of the double-click grace window.
     await findButton(wrapper, 'Finish exam').trigger('click')
     await settle()
+    await vi.advanceTimersByTimeAsync(500)
     await findButton(wrapper, 'Confirm finish').trigger('click')
     await waitForPath(router, `/results/${sessionId}`)
 
@@ -133,6 +134,32 @@ describe('ExamView', () => {
     expect(stored.status).toBe('completed')
     expect(stored.endedAt).not.toBeNull()
     expect(exam.session).toBeNull()
+  })
+
+  it('survives a double-click on Finish exam, and commits once past the grace window', async () => {
+    const { wrapper, router, exam } = await mountExamRoute()
+    await exam.startExam()
+    await settle()
+    const sessionId = exam.session!.id
+
+    // Both clicks of a double-click, with no wall-clock time between them: Vue has
+    // already swapped the confirm button into those same pixels.
+    await findButton(wrapper, 'Finish exam').trigger('click')
+    await findButton(wrapper, 'Confirm finish').trigger('click')
+    await settle()
+
+    expect(exam.session?.status).toBe('in-progress')
+    expect(router.currentRoute.value.name).toBe('exam')
+    // Still armed — the stray click was dropped, not treated as a confirmation.
+    expect(hasButton(wrapper, 'Confirm finish')).toBe(true)
+
+    // Past the grace window the same click commits.
+    await vi.advanceTimersByTimeAsync(500)
+    await findButton(wrapper, 'Confirm finish').trigger('click')
+    await waitForPath(router, `/results/${sessionId}`)
+
+    const stored = await storedSession(sessionId)
+    expect(stored.status).toBe('completed')
   })
 
   it('needs two clicks to abandon, and truncates the deadline to the end time', async () => {
@@ -147,6 +174,8 @@ describe('ExamView', () => {
     expect(hasButton(wrapper, 'Confirm abandon')).toBe(true)
     expect(exam.session?.status).toBe('in-progress')
 
+    // Well clear of the double-click grace window.
+    await vi.advanceTimersByTimeAsync(500)
     await findButton(wrapper, 'Confirm abandon').trigger('click')
     await waitForPath(router, `/results/${sessionId}`)
 
@@ -155,6 +184,27 @@ describe('ExamView', () => {
     // Abandon pulls the Deadline back to now, so `expired ⟺ now >= deadline` holds.
     expect(stored.exam!.deadline).toBe(stored.endedAt)
     expect(stored.exam!.deadline).not.toBe(originalDeadline)
+  })
+
+  it('survives a double-click on Abandon, and commits once past the grace window', async () => {
+    const { wrapper, router, exam } = await mountExamRoute()
+    await exam.startExam()
+    await settle()
+    const sessionId = exam.session!.id
+
+    await findButton(wrapper, 'Abandon').trigger('click')
+    await findButton(wrapper, 'Confirm abandon').trigger('click')
+    await settle()
+
+    expect(exam.session?.status).toBe('in-progress')
+    expect(hasButton(wrapper, 'Confirm abandon')).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(500)
+    await findButton(wrapper, 'Confirm abandon').trigger('click')
+    await waitForPath(router, `/results/${sessionId}`)
+
+    const stored = await storedSession(sessionId)
+    expect(stored.status).toBe('expired')
   })
 
   it('expires the exam at zero — never submits it — and moves on to the results', async () => {

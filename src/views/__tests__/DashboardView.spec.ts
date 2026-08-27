@@ -151,6 +151,11 @@ describe('DashboardView', () => {
     expect(findLink(wrapper, 'Start exam').attributes('href')).toBe('/exam')
     expect(wrapper.text()).not.toContain('Ready to find your gaps?')
 
+    // Every user-facing exam score carries this caption, dashboard included.
+    expect(wrapper.find('.hero__caption').text()).toBe(
+      'Estimated score — Microsoft uses an unpublished scaled model.',
+    )
+
     const rows = wrapper.findAll('.history__row')
     expect(rows).toHaveLength(2)
     expect(rows[0]!.attributes('href')).toBe(`/results/${completedId}`)

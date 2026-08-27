@@ -144,6 +144,34 @@ describe('progress store', () => {
     expect(await repository.getSessions()).toHaveLength(1)
   })
 
+  it('(f2) importProgress sweeps stranded sessions, expiring an overdue in-progress exam immediately', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-27T12:00:00.000Z'))
+
+    const q = questionBank[0]!
+    const deadline = '2026-08-27T11:00:00.000Z' // in the past relative to system time
+    const overdueSession = makeSession({
+      mode: 'exam',
+      status: 'in-progress',
+      startedAt: '2026-08-27T10:00:00.000Z',
+      exam: { deadline, questionIds: [q.id], selections: { [q.id]: q.correct } },
+    })
+
+    const store = useProgressStore()
+    await store.init()
+
+    const exported = JSON.stringify({ version: 1, sessions: [overdueSession], answers: [] })
+    await store.importProgress(exported)
+
+    const saved = store.sessions.find((s) => s.id === overdueSession.id)
+    expect(saved?.status).toBe('expired')
+    expect(saved?.endedAt).toBe(deadline)
+
+    const graded = store.answers.filter((a) => a.sessionId === overdueSession.id)
+    expect(graded).toHaveLength(1)
+    expect(graded[0]!.correct).toBe(true)
+  })
+
   it('(f) importProgress rejects malformed input and leaves data intact', async () => {
     const session = makeSession({ mode: 'practice', status: 'completed', endedAt: '2026-08-01T00:05:00.000Z' })
     await repository.saveSession(session)

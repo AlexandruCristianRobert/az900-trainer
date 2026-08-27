@@ -5,15 +5,21 @@ import { EXAM_QUESTION_COUNT } from './examBlueprint'
 /** All-or-nothing: the selected set must equal the correct set. */
 export function isCorrect(question: Question, selected: string[]): boolean {
   if (selected.length !== question.correct.length) return false
+  // A duplicate id (e.g. ['a', 'a']) can otherwise pad the length out to match
+  // a multi-pick count while covering fewer distinct options than required.
+  if (new Set(selected).size !== question.correct.length) return false
   const correctSet = new Set(question.correct)
   return selected.every((id) => correctSet.has(id))
 }
 
 /** A Selection is complete when it could be submitted: 1 pick for single, exactly correct-count picks for multi. */
 export function isCompleteSelection(question: Question, selected: string[]): boolean {
-  return question.kind === 'single'
-    ? selected.length === 1
-    : selected.length === question.correct.length
+  if (question.kind === 'single') return selected.length === 1
+  // Duplicates never count as complete — they'd disguise too few distinct picks.
+  return (
+    selected.length === question.correct.length &&
+    new Set(selected).size === question.correct.length
+  )
 }
 
 export function estimatedScore(correctCount: number): number {
