@@ -2,13 +2,19 @@ import { defineComponent, h, nextTick } from 'vue'
 import { createMemoryHistory, createRouter, RouterView, type Router } from 'vue-router'
 import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { mount, type DOMWrapper, type VueWrapper } from '@vue/test-utils'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Answer, Session } from '@/domain/entities'
 import { estimatedScore } from '@/domain/scoring'
 import { repository } from '@/repository'
 import { routes } from '@/router'
 import { useExamStore } from '@/stores/examSession'
 import { useProgressStore } from '@/stores/progress'
+
+/** Captured before any vi.useFakeTimers() call, so `settle` keeps a real event loop. */
+const realSetTimeout = globalThis.setTimeout
+
+const RESET_LABEL = 'Reset all progress'
+const CONFIRM_LABEL = 'Confirm reset — this deletes all sessions and answers'
 
 /** Hosts the real RouterView so DashboardView mounts exactly as the app mounts it. */
 const RouterHost = defineComponent({
@@ -39,7 +45,7 @@ async function mountDashboard(pinia: Pinia): Promise<Harness> {
 
 /** Yields a real event-loop turn so awaited repository writes and the re-render land. */
 async function settle(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  await new Promise((resolve) => realSetTimeout(resolve, 0))
   await nextTick()
 }
 
@@ -104,6 +110,10 @@ describe('DashboardView', () => {
     localStorage.clear()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('greets a brand-new user with every empty state and the baseline-exam CTA', async () => {
     const pinia = await setupProgress()
     const { wrapper } = await mountDashboard(pinia)
@@ -133,7 +143,9 @@ describe('DashboardView', () => {
     const { wrapper } = await mountDashboard(pinia)
 
     // Hero: the newest exam's estimated score, on the shared threshold-line scale.
-    expect(wrapper.find('[role="img"]').attributes('aria-label')).toBe(
+    // Pinned to the hero — the sparkline is a role="img" too, so a bare
+    // find('[role="img"]') would pass on document order alone.
+    expect(wrapper.find('.hero .score-scale').attributes('aria-label')).toBe(
       `Estimated score ${estimatedScore(1)} of 1000; pass line 700`,
     )
     expect(findLink(wrapper, 'Start exam').attributes('href')).toBe('/exam')
@@ -172,15 +184,17 @@ describe('DashboardView', () => {
     await seedTwoExams()
     const { wrapper } = await mountDashboard(pinia)
 
-    await findButton(wrapper, 'Reset all progress').trigger('click')
+    vi.useFakeTimers()
+    await findButton(wrapper, RESET_LABEL).trigger('click')
     await settle()
 
     // First click only arms the confirm — nothing has been deleted.
     expect(await repository.getSessions()).toHaveLength(2)
     expect(wrapper.findAll('.history__row')).toHaveLength(2)
 
-    const armed = findButton(wrapper, 'Confirm reset — this deletes all sessions and answers')
-    await armed.trigger('click')
+    // A deliberate second press, well clear of the double-click grace window.
+    vi.advanceTimersByTime(1000)
+    await findButton(wrapper, CONFIRM_LABEL).trigger('click')
     await settle()
 
     expect(await repository.getSessions()).toHaveLength(0)
@@ -188,7 +202,49 @@ describe('DashboardView', () => {
     expect(wrapper.text()).toContain('No exams yet.')
     expect(wrapper.text()).toContain('Ready to find your gaps?')
     // The control disarms itself, so a second reset needs two clicks again.
-    expect(wrapper.findAll('button').map((b) => b.text())).toContain('Reset all progress')
+    expect(wrapper.findAll('button').map((button) => button.text())).toContain(RESET_LABEL)
+  })
+
+  it('survives a double-click on reset, and disarms itself after the confirm window', async () => {
+    const pinia = await setupProgress()
+    await seedTwoExams()
+    const { wrapper } = await mountDashboard(pinia)
+
+    vi.useFakeTimers()
+    // Both clicks of a double-click, with no wall-clock time between them: Vue has
+    // already swapped the confirm button into those same pixels.
+    await findButton(wrapper, RESET_LABEL).trigger('click')
+    await findButton(wrapper, CONFIRM_LABEL).trigger('click')
+    await settle()
+
+    expect(await repository.getSessions()).toHaveLength(2)
+    expect(await repository.getAnswers()).toHaveLength(1)
+    expect(wrapper.findAll('.history__row')).toHaveLength(2)
+    // Still armed — the stray click was dropped, not treated as a confirmation.
+    expect(wrapper.findAll('button').map((button) => button.text())).toContain(CONFIRM_LABEL)
+
+    // Past the grace window the same click commits.
+    vi.advanceTimersByTime(500)
+    await findButton(wrapper, CONFIRM_LABEL).trigger('click')
+    await settle()
+    expect(await repository.getSessions()).toHaveLength(0)
+  })
+
+  it('disarms the reset when the confirm window lapses unused', async () => {
+    const pinia = await setupProgress()
+    await seedTwoExams()
+    const { wrapper } = await mountDashboard(pinia)
+
+    vi.useFakeTimers()
+    await findButton(wrapper, RESET_LABEL).trigger('click')
+    await settle()
+    expect(wrapper.findAll('button').map((button) => button.text())).toContain(CONFIRM_LABEL)
+
+    vi.advanceTimersByTime(6000)
+    await settle()
+
+    expect(wrapper.findAll('button').map((button) => button.text())).toContain(RESET_LABEL)
+    expect(await repository.getSessions()).toHaveLength(2)
   })
 
   it('reports an unreadable import in place, without touching stored progress', async () => {

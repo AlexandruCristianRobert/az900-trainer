@@ -41,6 +41,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   clearInterval(tickId)
+  clearTimeout(confirmTimeoutId)
 })
 
 function pad(value: number): string {
@@ -126,9 +127,21 @@ function goToReview(): void {
 
 // --- data controls ----------------------------------------------------------
 
+/** Matches ExamView's two-step confirm: armed for 5s, then it disarms itself. */
+const CONFIRM_WINDOW_MS = 5000
+/**
+ * A double-click lands its second click on whatever now occupies those pixels —
+ * and Vue swaps the confirm button in on a microtask, long before the ~100-200ms
+ * second click arrives. Clicks this soon after arming are the tail of a
+ * double-click, never a deliberate confirmation, so the guard drops them.
+ */
+const CONFIRM_GRACE_MS = 400
+
 const fileInput = ref<HTMLInputElement | null>(null)
 const importFailed = ref(false)
 const confirmingReset = ref(false)
+let armedAtMs = 0
+let confirmTimeoutId: ReturnType<typeof setTimeout> | undefined
 
 function onExport(): void {
   const blob = new Blob([progress.exportProgress()], { type: 'application/json' })
@@ -156,7 +169,7 @@ async function onFileChosen(event: Event): Promise<void> {
   try {
     await progress.importProgress(await file.text())
     importFailed.value = false
-    confirmingReset.value = false
+    disarmReset()
   } catch {
     // No alert(): a bad file reports itself in place, next to the control.
     importFailed.value = true
@@ -166,9 +179,23 @@ async function onFileChosen(event: Event): Promise<void> {
   }
 }
 
-async function confirmReset(): Promise<void> {
-  await progress.resetProgress()
+function disarmReset(): void {
+  clearTimeout(confirmTimeoutId)
+  confirmTimeoutId = undefined
   confirmingReset.value = false
+}
+
+function armReset(): void {
+  clearTimeout(confirmTimeoutId)
+  confirmingReset.value = true
+  armedAtMs = Date.now()
+  confirmTimeoutId = setTimeout(disarmReset, CONFIRM_WINDOW_MS)
+}
+
+async function confirmReset(): Promise<void> {
+  if (Date.now() - armedAtMs < CONFIRM_GRACE_MS) return
+  disarmReset()
+  await progress.resetProgress()
   importFailed.value = false
 }
 </script>
@@ -338,7 +365,7 @@ async function confirmReset(): Promise<void> {
             v-if="!confirmingReset"
             class="btn btn-ghost data__reset"
             type="button"
-            @click="confirmingReset = true"
+            @click="armReset"
           >
             Reset all progress
           </button>
@@ -418,11 +445,23 @@ async function confirmReset(): Promise<void> {
   gap: 0.75rem;
 }
 
-/* min() keeps the track from forcing a horizontal scrollbar below ~17rem wide. */
+/*
+ * Two fixed columns, not auto-fit: with five panels — one of them full-span —
+ * a third track leaves a permanent empty cell beside the pair above the wide
+ * Topics panel. At two columns every row fills (history/weak · topics · deck/data),
+ * and the narrowest two-column track is (40rem − 3rem page padding − 1.5rem gap) / 2
+ * ≈ 284px, so a card never drops below the ~17rem it needs.
+ */
 .dash-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+  grid-template-columns: 1fr;
   gap: 1.5rem;
+}
+
+@media (min-width: 40rem) {
+  .dash-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .panel--wide {
