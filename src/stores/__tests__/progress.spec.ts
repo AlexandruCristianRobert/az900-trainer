@@ -34,7 +34,7 @@ describe('progress store', () => {
     expect(store.ready).toBe(true)
     expect(store.sessions).toEqual([])
     expect(store.answers).toEqual([])
-    expect(store.domains.length).toBeGreaterThanOrEqual(3)
+    expect(store.domains.length).toBe(3)
     expect(store.history).toEqual([])
   })
 
@@ -157,6 +157,75 @@ describe('progress store', () => {
     expect(store.sessions).toHaveLength(1)
     expect(store.sessions[0]!.id).toBe(session.id)
     expect(await repository.getSessions()).toHaveLength(1)
+  })
+
+  it('saveSession upserts a new session into both the store cache and the repository', async () => {
+    const store = useProgressStore()
+    await store.init()
+
+    const session = makeSession({ mode: 'practice', status: 'in-progress' })
+    await store.saveSession(session)
+
+    expect(store.sessions.find((s) => s.id === session.id)).toEqual(session)
+    expect(await repository.getSession(session.id)).toEqual(session)
+  })
+
+  it('saveSession upserts an existing session by id (replaced, not duplicated)', async () => {
+    const store = useProgressStore()
+    await store.init()
+
+    const session = makeSession({ mode: 'practice', status: 'in-progress' })
+    await store.saveSession(session)
+
+    const updated: Session = { ...session, status: 'completed', endedAt: '2026-08-01T00:10:00.000Z' }
+    await store.saveSession(updated)
+
+    const cacheMatches = store.sessions.filter((s) => s.id === session.id)
+    expect(cacheMatches).toHaveLength(1)
+    expect(cacheMatches[0]).toEqual(updated)
+
+    const repoSessions = await repository.getSessions()
+    expect(repoSessions.filter((s) => s.id === session.id)).toHaveLength(1)
+    expect(repoSessions.find((s) => s.id === session.id)).toEqual(updated)
+  })
+
+  it('recordAnswers appends batches to both the store cache and the repository, cumulatively', async () => {
+    const store = useProgressStore()
+    await store.init()
+
+    const q1 = questionBank[0]!
+    const q2 = questionBank[1]!
+    const sessionId = crypto.randomUUID()
+    const batch1: Answer[] = [
+      {
+        id: crypto.randomUUID(),
+        sessionId,
+        questionId: q1.id,
+        selected: q1.correct,
+        correct: true,
+        submittedAt: '2026-08-01T00:00:00.000Z',
+      },
+    ]
+    const batch2: Answer[] = [
+      {
+        id: crypto.randomUUID(),
+        sessionId,
+        questionId: q2.id,
+        selected: q2.correct,
+        correct: true,
+        submittedAt: '2026-08-01T00:01:00.000Z',
+      },
+    ]
+
+    await store.recordAnswers(batch1)
+    await store.recordAnswers(batch2)
+
+    expect(store.answers).toHaveLength(2)
+    expect(store.answers.map((a) => a.id)).toEqual([batch1[0]!.id, batch2[0]!.id])
+
+    const repoAnswers = await repository.getAnswers()
+    expect(repoAnswers).toHaveLength(2)
+    expect(repoAnswers.map((a) => a.id)).toEqual([batch1[0]!.id, batch2[0]!.id])
   })
 
   it('init is idempotent (a second call does not re-sweep)', async () => {
