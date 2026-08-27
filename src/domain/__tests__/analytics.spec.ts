@@ -10,7 +10,6 @@ import {
   reviewDeck,
   topicStats,
 } from '@/domain/analytics'
-import { PASS_LINE } from '@/domain/examBlueprint'
 
 function makeQuestion(id: string, domain: Question['domain'], topic: Question['topic']): Question {
   return {
@@ -58,22 +57,27 @@ describe('analytics', () => {
   })
 
   describe('reviewDeck (case a)', () => {
-    it('includes questions with incorrect latest answer', () => {
+    it('single question cycles: wrong → out, correct → out, wrong → back in', () => {
       const bank = makeBank()
-      const q1 = bank[0]!
-      const q2 = bank[1]!
-      // q1: wrong at t1, correct at t2 → out of deck
-      // q2: wrong at t1, wrong again at t3 → in deck
-      const answers = [
-        answerFor(q1.id, '2026-08-01T00:00:00.000Z', false), // wrong
-        answerFor(q1.id, '2026-08-01T00:01:00.000Z', true),  // correct (latest)
-        answerFor(q2.id, '2026-08-01T00:00:00.000Z', false), // wrong
-        answerFor(q2.id, '2026-08-01T00:03:00.000Z', false), // wrong (latest)
-      ]
-      const deck = reviewDeck(bank, answers)
-      const deckIds = new Set(deck.map((q) => q.id))
-      expect(deckIds.has(q1.id)).toBe(false) // latest is correct
-      expect(deckIds.has(q2.id)).toBe(true)  // latest is incorrect
+      const question = bank[0]!
+
+      // t1: submit wrong answer → should be in deck
+      let answers = [answerFor(question.id, '2026-08-01T00:00:00.000Z', false)]
+      let deck = reviewDeck(bank, answers)
+      let deckIds = new Set(deck.map((q) => q.id))
+      expect(deckIds.has(question.id)).toBe(true) // wrong answer → in deck
+
+      // t2: submit correct answer → should leave deck
+      answers.push(answerFor(question.id, '2026-08-01T00:01:00.000Z', true))
+      deck = reviewDeck(bank, answers)
+      deckIds = new Set(deck.map((q) => q.id))
+      expect(deckIds.has(question.id)).toBe(false) // correct answer (latest) → out of deck
+
+      // t3: submit wrong answer again → should re-enter deck
+      answers.push(answerFor(question.id, '2026-08-01T00:02:00.000Z', false))
+      deck = reviewDeck(bank, answers)
+      deckIds = new Set(deck.map((q) => q.id))
+      expect(deckIds.has(question.id)).toBe(true) // wrong answer (latest) → back in deck
     })
   })
 
