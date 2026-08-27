@@ -36,7 +36,8 @@ export function latestAnswerByQuestion(answers: Answer[]): Map<string, Answer> {
   const latest = new Map<string, Answer>()
   for (const answer of answers) {
     const prev = latest.get(answer.questionId)
-    if (!prev || answer.submittedAt > prev.submittedAt) latest.set(answer.questionId, answer)
+    // >= (not >): submission order breaks ties when two Answers share a millisecond timestamp.
+    if (!prev || answer.submittedAt >= prev.submittedAt) latest.set(answer.questionId, answer)
   }
   return latest
 }
