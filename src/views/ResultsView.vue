@@ -146,7 +146,7 @@ const STATUS_CHIP_MODIFIER: Record<QuestionRow['status'], string> = {
       </header>
 
       <section class="card score-section">
-        <ScoreScale :score="score" />
+        <ScoreScale :score="score" :threshold="PASS_LINE" />
         <p
           class="score-section__verdict"
           :class="passed ? 'score-section__verdict--pass' : 'score-section__verdict--fail'"
@@ -189,6 +189,7 @@ const STATUS_CHIP_MODIFIER: Record<QuestionRow['status'], string> = {
                 type="button"
                 class="question-row__summary"
                 :aria-expanded="expandedId === row.questionId"
+                :aria-controls="`question-detail-${row.questionId}`"
                 @click="toggleExpanded(row.questionId)"
               >
                 <span class="question-row__number mono">{{ row.number }}</span>
@@ -197,7 +198,11 @@ const STATUS_CHIP_MODIFIER: Record<QuestionRow['status'], string> = {
                   {{ STATUS_LABEL[row.status] }}
                 </span>
               </button>
-              <div v-if="expandedId === row.questionId" class="question-row__detail">
+              <div
+                v-if="expandedId === row.questionId"
+                :id="`question-detail-${row.questionId}`"
+                class="question-row__detail"
+              >
                 <QuestionCard
                   :question="row.question"
                   :model-value="row.answer?.selected ?? []"
