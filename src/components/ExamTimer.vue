@@ -21,12 +21,19 @@ let expiredEmitted = false
 /**
  * Always derived from the wall clock, never a decremented counter — a throttled
  * or suspended tab loses interval ticks but must never gain exam time.
+ * `null` when the deadline is unparseable: a corrupt clock must fail safe, not
+ * end the exam.
  */
-const remainingMs = computed(() => Math.max(0, Date.parse(props.deadline) - nowMs.value))
+const remainingMs = computed<number | null>(() => {
+  const deadlineMs = Date.parse(props.deadline)
+  if (!Number.isFinite(deadlineMs)) return null
+  return Math.max(0, deadlineMs - nowMs.value)
+})
 
-const isLow = computed(() => remainingMs.value <= LOW_MARK_MS)
+const isLow = computed(() => remainingMs.value !== null && remainingMs.value <= LOW_MARK_MS)
 
 const display = computed(() => {
+  if (remainingMs.value === null) return '--:--'
   const totalSeconds = Math.ceil(remainingMs.value / 1000)
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
@@ -38,7 +45,8 @@ function pad(value: number): string {
 }
 
 /** Announce only on the tick that crosses a mark, so nothing repeats per second. */
-function announceCrossing(previousMs: number, currentMs: number): void {
+function announceCrossing(previousMs: number | null, currentMs: number | null): void {
+  if (previousMs === null || currentMs === null) return
   if (previousMs > LAST_MINUTE_MS && currentMs <= LAST_MINUTE_MS) {
     announcement.value = '1 minute remaining'
   } else if (previousMs > LOW_MARK_MS && currentMs <= LOW_MARK_MS) {
@@ -47,7 +55,7 @@ function announceCrossing(previousMs: number, currentMs: number): void {
 }
 
 function emitExpiredOnce(): void {
-  if (expiredEmitted || remainingMs.value > 0) return
+  if (expiredEmitted || remainingMs.value === null || remainingMs.value > 0) return
   expiredEmitted = true
   emit('expired')
 }

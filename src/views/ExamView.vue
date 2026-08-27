@@ -240,9 +240,4 @@ onBeforeUnmount(disarmConfirm)
   color: var(--ink-muted);
   font-size: 0.9rem;
 }
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>

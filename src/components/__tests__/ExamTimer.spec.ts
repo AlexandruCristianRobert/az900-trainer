@@ -77,6 +77,29 @@ describe('ExamTimer', () => {
     expect(wrapper.emitted('expired')).toHaveLength(1)
   })
 
+  it('emits expired once on mount when the deadline has already passed', async () => {
+    // Returning to the exam room after the deadline: no tick will ever cross zero.
+    const wrapper = mountTimer(-5 * MINUTE)
+    expect(wrapper.text()).toContain('00:00')
+    expect(wrapper.emitted('expired')).toHaveLength(1)
+
+    await advance(10 * SECOND)
+    expect(wrapper.emitted('expired')).toHaveLength(1)
+  })
+
+  it('fails safe on an unparseable deadline instead of ending the exam', async () => {
+    const wrapper = mount(ExamTimer, { props: { deadline: 'garbage' } })
+    expect(wrapper.text()).toContain('--:--')
+    expect(wrapper.text()).not.toContain('NaN')
+    expect(wrapper.emitted('expired')).toBeUndefined()
+    expect(wrapper.classes()).not.toContain('timer--low')
+
+    await advance(10 * MINUTE)
+    expect(wrapper.text()).toContain('--:--')
+    expect(wrapper.emitted('expired')).toBeUndefined()
+    expect(announcement(wrapper)).toBe('')
+  })
+
   it('never renders a negative remaining time', async () => {
     const wrapper = mountTimer(30 * SECOND)
     await advance(2 * MINUTE)
