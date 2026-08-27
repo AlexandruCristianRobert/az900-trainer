@@ -3,6 +3,8 @@ import type { Answer, Session } from '@/domain/entities'
 import { LocalStorageRepository } from '../LocalStorageRepository'
 import type { StudyRepository } from '../StudyRepository'
 
+const STORAGE_KEY = 'az900-trainer/progress/v1'
+
 describe('LocalStorageRepository', () => {
   let repository: StudyRepository
 
@@ -254,7 +256,7 @@ describe('LocalStorageRepository', () => {
 
   describe('Corruption handling', () => {
     it('returns empty arrays when JSON is corrupt', async () => {
-      localStorage.setItem('az900-trainer/progress/v1', '{oops')
+      localStorage.setItem(STORAGE_KEY, '{oops')
 
       const sessions = await repository.getSessions()
       const answers = await repository.getAnswers()
@@ -264,7 +266,7 @@ describe('LocalStorageRepository', () => {
     })
 
     it('returns empty arrays when version is wrong', async () => {
-      localStorage.setItem('az900-trainer/progress/v1', JSON.stringify({
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
         version: 2,
         sessions: [],
         answers: [],
@@ -278,7 +280,7 @@ describe('LocalStorageRepository', () => {
     })
 
     it('returns empty arrays when sessions is not an array', async () => {
-      localStorage.setItem('az900-trainer/progress/v1', JSON.stringify({
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
         version: 1,
         sessions: 'not-an-array',
         answers: [],
@@ -289,7 +291,7 @@ describe('LocalStorageRepository', () => {
     })
 
     it('returns empty arrays when answers is not an array', async () => {
-      localStorage.setItem('az900-trainer/progress/v1', JSON.stringify({
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
         version: 1,
         sessions: [],
         answers: 'not-an-array',
@@ -300,7 +302,7 @@ describe('LocalStorageRepository', () => {
     })
 
     it('does not throw when reading corrupt data', async () => {
-      localStorage.setItem('az900-trainer/progress/v1', '{invalid json')
+      localStorage.setItem(STORAGE_KEY, '{invalid json')
 
       await expect(repository.getSessions()).resolves.toEqual([])
       await expect(repository.getAnswers()).resolves.toEqual([])
