@@ -4282,7 +4282,7 @@ describe('DashboardView', () => {
     expect(row.exists()).toBe(true)
     expect(row.text()).toContain('Describe monitoring tools in Azure')
     expect(row.text()).toContain('0%')
-    expect(findButton(wrapper, 'Start review').attributes('disabled')).toBeUndefined()
+    expect(findLink(wrapper, 'Start review').attributes('href')).toBe('/review')
     expect(tileValues(wrapper)[3]).toBe('4')
 
     await row.trigger('click')
