@@ -14,12 +14,14 @@ import { STUDY_GUIDE_VERSION } from '@/data/questions'
 
 <style scoped>
 .app-footer {
-  max-width: 960px;
+  max-width: 1040px;
   margin: 0 auto;
-  padding: 1.5rem 1.5rem 2.5rem;
+  padding: 18px 28px 28px;
+  border-top: 1px solid var(--line);
   color: var(--ink-muted);
-  font-size: 0.85rem;
+  font-size: 12px;
   line-height: 1.5;
+  text-align: center;
 }
 
 .app-footer__version {
