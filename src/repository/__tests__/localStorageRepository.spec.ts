@@ -309,4 +309,27 @@ describe('LocalStorageRepository', () => {
       await expect(repository.getSession('any-id')).resolves.toBeNull()
     })
   })
+
+  describe('Preferences', () => {
+    it('returns defaults when nothing is stored', async () => {
+      expect(await repository.getPreferences()).toEqual({ feedbackTiming: 'instant', domain: 'all' })
+    })
+
+    it('round-trips preferences under their own key, untouched by replaceAll', async () => {
+      await repository.savePreferences({ feedbackTiming: 'end-of-round', domain: 'storage' as never })
+      // an invalid domain is sanitized on read
+      expect(await repository.getPreferences()).toEqual({ feedbackTiming: 'end-of-round', domain: 'all' })
+
+      await repository.savePreferences({ feedbackTiming: 'end-of-round', domain: 'management-governance' })
+      await repository.replaceAll([], [])
+      expect(await repository.getPreferences()).toEqual({ feedbackTiming: 'end-of-round', domain: 'management-governance' })
+      expect(localStorage.getItem('az900-trainer/preferences/v1')).not.toBeNull()
+      expect(localStorage.getItem(STORAGE_KEY)).not.toContain('feedbackTiming')
+    })
+
+    it('survives corrupt preference JSON', async () => {
+      localStorage.setItem('az900-trainer/preferences/v1', '{nope')
+      expect(await repository.getPreferences()).toEqual({ feedbackTiming: 'instant', domain: 'all' })
+    })
+  })
 })

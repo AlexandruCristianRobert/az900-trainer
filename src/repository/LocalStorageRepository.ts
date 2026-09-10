@@ -1,10 +1,13 @@
 import type { Question } from '@/data/types'
 import { questionBank } from '@/data/questions'
 import type { Answer, Session } from '@/domain/entities'
+import { sanitizePreferences, type Preferences } from '@/domain/preferences'
 import type { StudyRepository } from './StudyRepository'
 
 // Private to this module — the ONLY localStorage access in the app (ADR-0002).
 const STORAGE_KEY = 'az900-trainer/progress/v1'
+// Also private to this module (ADR-0002). Preferences are device-local, not progress.
+const PREFERENCES_KEY = 'az900-trainer/preferences/v1'
 
 interface StoredProgress {
   version: 1
@@ -54,5 +57,16 @@ export class LocalStorageRepository implements StudyRepository {
   async getAnswers(): Promise<Answer[]> { return this.read().answers }
   async replaceAll(sessions: Session[], answers: Answer[]): Promise<void> {
     this.write({ version: 1, sessions, answers })
+  }
+  async getPreferences(): Promise<Preferences> {
+    try {
+      const raw = localStorage.getItem(PREFERENCES_KEY)
+      return sanitizePreferences(raw ? JSON.parse(raw) : null)
+    } catch {
+      return sanitizePreferences(null)
+    }
+  }
+  async savePreferences(preferences: Preferences): Promise<void> {
+    localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences))
   }
 }
