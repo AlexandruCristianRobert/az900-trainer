@@ -30,7 +30,8 @@ onMounted(() => {
       <XpMeter v-if="progress.ready && !isExamRoom" :total-xp="progress.totalXp" />
     </header>
 
-    <RouterView v-if="progress.ready" />
+    <!-- Keyed by path so /practice → /sprint remounts the view and starts a fresh Round. -->
+    <RouterView v-if="progress.ready" :key="route.path" />
     <p v-else-if="initFailed" class="loading">
       Couldn't load your data. Try reloading, or clear this site's storage.
     </p>

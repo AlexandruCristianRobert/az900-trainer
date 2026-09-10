@@ -9,6 +9,24 @@ export const routes: RouteRecordRaw[] = [
     component: DashboardView,
   },
   {
+    path: '/practice',
+    name: 'practice',
+    component: () => import('../views/RoundView.vue'),
+    props: { mode: 'practice' },
+  },
+  {
+    path: '/sprint',
+    name: 'sprint',
+    component: () => import('../views/RoundView.vue'),
+    props: { mode: 'sprint' },
+  },
+  {
+    path: '/review',
+    name: 'review',
+    component: () => import('../views/RoundView.vue'),
+    props: { mode: 'review' },
+  },
+  {
     path: '/exam',
     name: 'exam',
     component: () => import('../views/ExamView.vue'),
