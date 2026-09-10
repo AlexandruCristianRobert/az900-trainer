@@ -1,5 +1,7 @@
 # AZ-900 Trainer — Converged Specification
 
+> **Partially superseded (2026-09-10)** by [the v2 redesign spec](./2026-09-10-az900-trainer-v2-redesign-spec.md): dashboard, practice and review flow, results, design language. Exam mode, persistence, question bank and quality floor stand.
+
 Product spec resulting from a grilling session (2026-08-27). Canonical vocabulary lives in `CONTEXT.md`; architectural decisions in `docs/adr/`. This document records the behavioral decisions.
 
 ## What this is

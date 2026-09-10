@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&amp;family=Archivo+Black&amp;display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;padding:0;background:#F5F1E8}
+    a{color:#141414;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+    a:hover{color:#FF4D00}
+    button{font-family:inherit}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes blink{50%{opacity:.3}}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;background:#F5F1E8;color:#141414;font:400 15px/1.5 Archivo,sans-serif">
+  <aside style="flex:1 0 240px;background:#141414;color:#F5F1E8;display:flex;flex-direction:column;gap:32px;padding:28px 24px;box-sizing:border-box">
+    <div>
+      <div style="font:400 34px/0.95 'Archivo Black',sans-serif;letter-spacing:-0.01em">AZ-900</div>
+      <div style="font:700 12px/1 Archivo,sans-serif;letter-spacing:.35em;text-transform:uppercase;color:#FF4D00;margin-top:6px">Trainer</div>
+    </div>
+    <div>
+      <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#A39C8F">Level</div>
+      <div style="font:400 84px/0.95 'Archivo Black',sans-serif;color:#FF4D00">{{ levelNum }}</div>
+      <div style="display:flex;justify-content:space-between;font:700 11px/1 Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#A39C8F;margin:14px 0 6px"><span>XP</span><span>{{ xpLabel }}</span></div>
+      <div style="height:12px;background:#33302B"><div style="height:12px;background:#FF4D00;width:{{ xpPct }}%;transition:width .2s"></div></div>
+      <div style="font:500 12px/1.4 Archivo,sans-serif;color:#A39C8F;margin-top:6px">{{ xpToNext }} XP to level {{ nextLevel }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div>
+        <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#A39C8F">Best streak</div>
+        <div style="font:400 34px/1.1 'Archivo Black',sans-serif">×{{ bestStreak }}</div>
+      </div>
+      <div>
+        <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#A39C8F">To review</div>
+        <div style="font:400 34px/1.1 'Archivo Black',sans-serif">{{ reviewCount }}</div>
+      </div>
+    </div>
+    <sc-if value="{{ isRound }}" hint-placeholder-val="{{ false }}">
+      <div style="border-top:2px solid #33302B;padding-top:24px">
+        <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#A39C8F">This round</div>
+        <div style="font:400 44px/1 'Archivo Black',sans-serif;margin-top:8px">{{ qNumStr }}<span style="color:#A39C8F">/{{ qTotal }}</span></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:14px;flex-wrap:wrap">
+          <span style="font:700 13px/1 Archivo,sans-serif;color:#FF4D00">+{{ roundXp }} XP</span>
+          <sc-if value="{{ showCombo }}" hint-placeholder-val="{{ false }}">
+            <span style="background:#FF4D00;color:#141414;font:700 11px/1 Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:5px 8px">×{{ comboN }} combo</span>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+    <p style="margin:auto 0 0;font:400 11px/1.5 Archivo,sans-serif;color:#8F887F">Unofficial study aid. Not affiliated with Microsoft. AZ-900 skills measured as of July 20, 2026.</p>
+  </aside>
+  <main style="flex:999 1 520px;min-width:0;display:flex;flex-direction:column">
+    <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
+      <p style="font:700 13px/1 Archivo,sans-serif;letter-spacing:.2em;text-transform:uppercase;text-align:center;padding:120px 32px;color:#57514B">Loading question bank…</p>
+    </sc-if>
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:960px;padding:56px 48px 72px;box-sizing:border-box;width:100%;animation:fadeUp .24s ease-out">
+        <h1 style="font:400 clamp(44px,7vw,84px)/0.95 'Archivo Black',sans-serif;text-transform:uppercase;letter-spacing:-0.01em;margin:0 0 16px">Drill.<br><span style="background:#FF4D00;padding:0 10px;display:inline-block">Streak.</span><br>Pass.</h1>
+        <p style="font:500 17px/1.5 Archivo,sans-serif;margin:0 0 48px;max-width:52ch">90 original questions across all three AZ-900 domains. Ten at a time, one per screen. Streaks multiply your XP.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+          <div style="border:3px solid #141414;background:#F5F1E8;box-shadow:6px 6px 0 #141414;padding:24px;display:flex;flex-direction:column;gap:18px">
+            <h2 style="font:400 26px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0">Practice</h2>
+            <p style="margin:0;font:400 14px/1.5 Archivo,sans-serif">{{ roundSize }} questions. Streak bonuses. Explanations for every option.</p>
+            <div>
+              <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B;margin-bottom:8px">Domains</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.pick }}" style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;cursor:pointer;border:2px solid #141414;background:{{ c.bg }};color:{{ c.fg }};transition:all .12s">{{ c.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B;margin-bottom:8px">Feedback</div>
+              <div style="display:flex;border:2px solid #141414">
+                <sc-for list="{{ fbModes }}" as="f" hint-placeholder-count="2">
+                  <button onClick="{{ f.pick }}" style="flex:1;font:700 11px/1 Archivo,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:10px 8px;cursor:pointer;border:none;background:{{ f.bg }};color:{{ f.fg }};transition:all .12s">{{ f.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <button onClick="{{ startPractice }}" style="margin-top:auto;width:100%;font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px;cursor:pointer;border:3px solid #141414;background:#141414;color:#F5F1E8;transition:all .12s" style-hover="background:#FF4D00;color:#141414">Start round</button>
+          </div>
+          <div style="border:3px solid #141414;background:#F5F1E8;box-shadow:6px 6px 0 #141414;padding:24px;display:flex;flex-direction:column;gap:18px">
+            <h2 style="font:400 26px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0">Sprint</h2>
+            <p style="margin:0;font:400 14px/1.5 Archivo,sans-serif">Beat the clock. Correct answers earn a speed bonus. No pausing.</p>
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <span style="font:400 64px/1 'Archivo Black',sans-serif;color:#FF4D00">{{ sprintSecs }}<span style="font-size:30px">s</span></span>
+              <span style="font:700 11px/1.3 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#57514B">per<br>question</span>
+            </div>
+            <button onClick="{{ startSprint }}" style="margin-top:auto;width:100%;font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px;cursor:pointer;border:3px solid #141414;background:transparent;color:#141414;transition:all .12s" style-hover="background:#141414;color:#F5F1E8">Start sprint</button>
+          </div>
+          <div style="border:3px solid #141414;background:#F5F1E8;box-shadow:6px 6px 0 #141414;padding:24px;display:flex;flex-direction:column;gap:18px">
+            <h2 style="font:400 26px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0">Review</h2>
+            <p style="margin:0;font:400 14px/1.5 Archivo,sans-serif">{{ reviewMsg }}</p>
+            <div style="font:400 64px/1 'Archivo Black',sans-serif">{{ reviewCount }}</div>
+            <button onClick="{{ startReview }}" disabled="{{ noReview }}" style="margin-top:auto;width:100%;font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px;cursor:{{ reviewCursor }};border:3px solid #141414;background:transparent;color:#141414;transition:all .12s;opacity:{{ reviewOpacity }}" style-hover="background:{{ reviewHoverBg }};color:{{ reviewHoverFg }}">Review missed</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;margin-top:64px">
+          <div>
+            <h3 style="font:400 18px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0 0 20px;border-bottom:3px solid #141414;padding-bottom:10px">Accuracy by domain</h3>
+            <div style="display:flex;flex-direction:column;gap:18px">
+              <sc-for list="{{ domRows }}" as="d" hint-placeholder-count="3">
+                <div>
+                  <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:6px">
+                    <span style="font:700 13px/1.3 Archivo,sans-serif;text-transform:uppercase;letter-spacing:.04em">{{ d.label }}</span>
+                    <span style="font:500 13px/1.3 Archivo,sans-serif;color:#57514B">{{ d.meta }}</span>
+                  </div>
+                  <div style="height:16px;border:2px solid #141414;background:#F5F1E8"><div style="height:100%;background:#FF4D00;width:{{ d.pct }}%;transition:width .2s"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <h3 style="font:400 18px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0 0 20px;border-bottom:3px solid #141414;padding-bottom:10px">Weak areas</h3>
+            <sc-if value="{{ hasWeak }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ weakRows }}" as="w" hint-placeholder-count="2">
+                  <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 14px;border:2px solid #141414">
+                    <span style="font:500 14px/1.4 Archivo,sans-serif">{{ w.label }}</span>
+                    <span style="font:700 14px/1.4 Archivo,sans-serif;background:#FF4D00;padding:0 6px">{{ w.pct }}%</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noWeak }}" hint-placeholder-val="{{ true }}">
+              <p style="margin:0;font:400 14px/1.5 Archivo,sans-serif;color:#57514B">{{ weakEmptyMsg }}</p>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isRound }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:800px;padding:40px 48px 72px;box-sizing:border-box;width:100%">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <span style="font:700 12px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B">{{ qDomain }}</span>
+          <button onClick="{{ exitRound }}" style="font:700 12px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:8px 14px;cursor:pointer;border:2px solid #141414;background:transparent;color:#141414;transition:all .12s" style-hover="background:#141414;color:#F5F1E8">Exit</button>
+        </div>
+        <div style="display:flex;gap:6px;margin:18px 0 0">
+          <sc-for list="{{ segs }}" as="s" hint-placeholder-count="10">
+            <div style="flex:1;height:12px;background:{{ s.bg }};border:{{ s.bd }};box-sizing:border-box;animation:{{ s.anim }};transition:background .12s"></div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ isSprint }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:14px;margin-top:12px">
+            <div style="flex:1;height:12px;border:2px solid #141414;background:#F5F1E8"><div style="height:100%;background:{{ timeColor }};width:{{ timePct }}%"></div></div>
+            <span style="font:400 22px/1 'Archivo Black',sans-serif;min-width:52px;text-align:right">{{ timeStr }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isMulti }}" hint-placeholder-val="{{ false }}">
+          <span style="display:inline-block;margin-top:30px;border:2px solid #141414;font:700 11px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:6px 10px">Select {{ needCount }}</span>
+        </sc-if>
+        <h2 style="font:700 clamp(19px,2.6vw,25px)/1.35 Archivo,sans-serif;margin:22px 0 28px;letter-spacing:-0.01em">{{ stem }}</h2>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
+            <div onClick="{{ o.pick }}" style="display:flex;gap:16px;align-items:flex-start;padding:16px 18px;border:3px solid {{ o.bd }};background:{{ o.bg }};color:{{ o.txt }};cursor:{{ o.cursor }};transition:border-color .12s,background .12s" style-hover="border-color:{{ o.hoverBd }}">
+              <div style="width:32px;height:32px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:400 15px/1 'Archivo Black',sans-serif;text-transform:uppercase;border:2px solid {{ o.chipBd }};background:{{ o.chipBg }};color:{{ o.chipFg }}">{{ o.letter }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                  <span style="font:500 15px/1.45 Archivo,sans-serif;flex:1;min-width:200px">{{ o.text }}</span>
+                  <sc-if value="{{ o.tag }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:4px 7px;background:{{ o.tagBg }};color:{{ o.tagFg }};white-space:nowrap">{{ o.tag }}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ o.showExp }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:8px 0 0;font:400 13px/1.5 Archivo,sans-serif;color:{{ o.expColor }};max-width:64ch">{{ o.explanation }}</p>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:28px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:16px">
+            <sc-if value="{{ revealMsg }}" hint-placeholder-val="{{ false }}">
+              <span style="background:{{ revealBg }};color:{{ revealFg }};font:700 12px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:8px 12px">{{ revealMsg }}</span>
+            </sc-if>
+            <sc-if value="{{ showLearn }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ learnMore }}" target="_blank" style="font:700 13px/1 Archivo,sans-serif">Learn more</a>
+            </sc-if>
+          </div>
+          <button onClick="{{ primaryAction }}" disabled="{{ primaryDisabled }}" style="font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px 32px;cursor:{{ primaryCursor }};border:3px solid #141414;background:#141414;color:#F5F1E8;transition:all .12s;opacity:{{ primaryOpacity }}" style-hover="background:{{ primaryHoverBg }};color:{{ primaryHoverFg }}">{{ primaryLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:880px;padding:56px 48px 72px;box-sizing:border-box;width:100%;animation:fadeUp .24s ease-out">
+        <sc-if value="{{ leveledUp }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#FF4D00;color:#141414;padding:18px 24px;margin-bottom:32px;border:3px solid #141414;box-shadow:6px 6px 0 #141414">
+            <span style="font:400 26px/1 'Archivo Black',sans-serif;text-transform:uppercase">Level {{ levelNum }} reached</span>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:baseline;gap:24px;flex-wrap:wrap">
+          <span style="font:400 clamp(80px,14vw,150px)/0.9 'Archivo Black',sans-serif">{{ resPct }}<span style="color:#FF4D00">%</span></span>
+          <h1 style="font:400 clamp(26px,4vw,40px)/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:0">{{ resultHeadline }}</h1>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:3px;background:#141414;border:3px solid #141414;margin-top:36px">
+          <div style="background:#F5F1E8;padding:18px 20px">
+            <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B;margin-bottom:8px">Correct</div>
+            <div style="font:400 36px/1 'Archivo Black',sans-serif">{{ resCorrect }}</div>
+          </div>
+          <div style="background:#F5F1E8;padding:18px 20px">
+            <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B;margin-bottom:8px">XP earned</div>
+            <div style="font:400 36px/1 'Archivo Black',sans-serif;color:#FF4D00">+{{ resXp }}</div>
+          </div>
+          <div style="background:#F5F1E8;padding:18px 20px">
+            <div style="font:700 11px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#57514B;margin-bottom:8px">Best combo</div>
+            <div style="font:400 36px/1 'Archivo Black',sans-serif">×{{ resCombo }}</div>
+          </div>
+        </div>
+        <h3 style="font:400 18px/1 'Archivo Black',sans-serif;text-transform:uppercase;margin:48px 0 16px;border-bottom:3px solid #141414;padding-bottom:10px">Breakdown</h3>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ resRows }}" as="r" hint-placeholder-count="10">
+            <div style="border:2px solid #141414">
+              <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:14px;padding:12px 14px;cursor:pointer" style-hover="background:#ECE6DA">
+                <div style="width:26px;height:26px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:700 14px/1 Archivo,sans-serif;background:{{ r.mkBg }};color:{{ r.mkFg }}">{{ r.mk }}</div>
+                <span style="font:700 12px/1 Archivo,sans-serif;color:#57514B">{{ r.numStr }}</span>
+                <span style="flex:1;min-width:0;font:500 14px/1.4 Archivo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.stem }}</span>
+                <span style="font:400 20px/1 'Archivo Black',sans-serif">{{ r.chev }}</span>
+              </div>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:4px 14px 16px;display:flex;flex-direction:column;gap:8px;border-top:2px solid #141414">
+                  <p style="margin:10px 0 4px;font:500 14px/1.5 Archivo,sans-serif">{{ r.fullStem }}</p>
+                  <sc-for list="{{ r.opts }}" as="ro" hint-placeholder-count="4">
+                    <div style="padding:10px 12px;border:2px solid {{ ro.bd }};background:{{ ro.bg }};color:{{ ro.txt }}">
+                      <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                        <span style="font:400 13px/1.45 Archivo,sans-serif;flex:1;min-width:200px"><strong style="font:700 13px/1 Archivo,sans-serif;text-transform:uppercase">{{ ro.letter }}</strong> — {{ ro.text }}</span>
+                        <sc-if value="{{ ro.tag }}" hint-placeholder-val="{{ false }}">
+                          <span style="font:700 10px/1 Archivo,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:3px 6px;background:{{ ro.tagBg }};color:{{ ro.tagFg }};white-space:nowrap">{{ ro.tag }}</span>
+                        </sc-if>
+                      </div>
+                      <p style="margin:6px 0 0;font:400 12.5px/1.5 Archivo,sans-serif;color:{{ ro.expColor }};max-width:70ch">{{ ro.explanation }}</p>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ r.hasLearn }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ r.learnMore }}" target="_blank" style="font:700 13px/1 Archivo,sans-serif;margin-top:4px;align-self:flex-start">Learn more</a>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:36px;flex-wrap:wrap">
+          <button onClick="{{ newRound }}" style="font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px 32px;cursor:pointer;border:3px solid #141414;background:#141414;color:#F5F1E8;transition:all .12s" style-hover="background:#FF4D00;color:#141414">New round</button>
+          <sc-if value="{{ hasMissed }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ startReview }}" style="font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px 32px;cursor:pointer;border:3px solid #141414;background:transparent;color:#141414;transition:all .12s" style-hover="background:#141414;color:#F5F1E8">Review missed</button>
+          </sc-if>
+          <button onClick="{{ exitRound }}" style="font:700 14px/1 Archivo,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:16px 32px;cursor:pointer;border:3px solid transparent;background:transparent;color:#141414;transition:all .12s" style-hover="border-color:#141414">Dashboard</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;roundSize&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:5,&quot;max&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;},&quot;sprintSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:20,&quot;min&quot;:10,&quot;max&quot;:40,&quot;step&quot;:5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'dashboard', loading: true, questions: [], log: [], xp: 0, bestStreak: 0, instant: true, domain: 'all', round: null, openRow: -1 };
+  KEY = 'az900-trainer-redesign/v1';
+  DOMAINS = {
+    'cloud-concepts': 'Cloud concepts',
+    'architecture-services': 'Architecture & services',
+    'management-governance': 'Management & governance'
+  };
+  TOPICS = {
+    'describe-cloud-computing': 'Describe cloud computing',
+    'benefits-of-cloud-services': 'Benefits of cloud services',
+    'cloud-service-types': 'Cloud service types',
+    'core-architectural-components': 'Core architectural components',
+    'compute-networking': 'Compute and networking',
+    'storage': 'Storage services',
+    'identity-access-security': 'Identity, access, and security',
+    'cost-management': 'Cost management',
+    'governance-compliance': 'Governance and compliance',
+    'managing-deploying-resources': 'Managing and deploying resources',
+    'monitoring-tools': 'Monitoring tools'
+  };
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        this.setState({ log: d.log || [], xp: d.xp || 0, bestStreak: d.bestStreak || 0, instant: d.instant !== false, domain: d.domain || 'all' });
+      }
+    } catch (e) {}
+    fetch('questions.json').then((r) => r.json()).then((qs) => this.setState({ questions: qs, loading: false }));
+    this.timer = setInterval(() => this.tick(), 200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  persist() {
+    const s = this.state;
+    try { localStorage.setItem(this.KEY, JSON.stringify({ log: s.log, xp: s.xp, bestStreak: s.bestStreak, instant: s.instant, domain: s.domain })); } catch (e) {}
+  }
+  roundSize() { return Math.max(3, Math.min(20, this.props.roundSize ?? 10)); }
+  sprintSecs() { return Math.max(5, Math.min(60, this.props.sprintSeconds ?? 20)); }
+  lastByQ() {
+    const m = new Map();
+    for (const a of this.state.log) { const p = m.get(a.q); if (!p || a.t > p.t) m.set(a.q, a); }
+    return m;
+  }
+  reviewIds() {
+    const last = this.lastByQ();
+    const bank = new Set(this.state.questions.map((q) => q.id));
+    const ids = [];
+    for (const [q, a] of last) if (!a.ok && bank.has(q)) ids.push(q);
+    return ids;
+  }
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    return arr;
+  }
+  draw(mode) {
+    const { questions, domain } = this.state;
+    let pool;
+    if (mode === 'review') { const set = new Set(this.reviewIds()); pool = questions.filter((q) => set.has(q.id)); }
+    else pool = domain === 'all' ? questions.slice() : questions.filter((q) => q.domain === domain);
+    const last = this.lastByQ();
+    const fresh = this.shuffle(pool.filter((q) => !last.has(q.id)));
+    const seen = this.shuffle(pool.filter((q) => last.has(q.id))).sort((a, b) => (last.get(a.id).t < last.get(b.id).t ? -1 : 1));
+    return this.shuffle(fresh.concat(seen).slice(0, Math.min(this.roundSize(), pool.length)));
+  }
+  startRound(mode) {
+    if (this.state.loading) return;
+    const qs = this.draw(mode);
+    if (!qs.length) return;
+    this.setState({
+      view: 'round', openRow: -1,
+      round: {
+        mode, qids: qs.map((q) => q.id), idx: 0, selected: [], revealed: false, results: [],
+        streak: 0, best: 0, xpGained: 0, xpStart: this.state.xp, lastGain: 0, lastOk: null, timedOut: false,
+        qDeadline: mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0
+      }
+    });
+  }
+  curQ() { const r = this.state.round; return r ? this.state.questions.find((q) => q.id === r.qids[r.idx]) : null; }
+  complete(q, sel) { return q.kind === 'single' ? sel.length === 1 : new Set(sel).size === q.correct.length && sel.length === q.correct.length; }
+  correct(q, sel) {
+    if (sel.length !== q.correct.length || new Set(sel).size !== q.correct.length) return false;
+    const c = new Set(q.correct); return sel.every((id) => c.has(id));
+  }
+  pick(optId) {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q || r.revealed) return;
+    let sel;
+    if (q.kind === 'single') sel = [optId];
+    else if (r.selected.includes(optId)) sel = r.selected.filter((x) => x !== optId);
+    else if (r.selected.length >= q.correct.length) return;
+    else sel = r.selected.concat(optId);
+    this.setState({ round: { ...r, selected: sel } });
+  }
+  record(r, q, sel, timedOut) {
+    const ok = this.correct(q, sel);
+    const streak = ok ? r.streak + 1 : 0;
+    const gain = ok ? 10 + Math.min(2 * (streak - 1), 10) + (r.mode === 'sprint' ? 5 : 0) : 0;
+    const log = this.state.log.concat({ q: q.id, ok, t: new Date().toISOString() });
+    const xp = this.state.xp + gain;
+    const bestStreak = Math.max(this.state.bestStreak, streak);
+    const round = {
+      ...r, streak, best: Math.max(r.best, streak), xpGained: r.xpGained + gain,
+      lastGain: gain, lastOk: ok, timedOut: !!timedOut,
+      results: r.results.concat({ qid: q.id, selected: sel.slice(), ok })
+    };
+    this.setState({ log, xp, bestStreak, round }, () => this.persist());
+    return round;
+  }
+  advance(round) {
+    const r = round || this.state.round;
+    const next = r.idx + 1;
+    if (next >= r.qids.length) { this.setState({ view: 'results', round: { ...r, revealed: false }, openRow: -1 }); return; }
+    this.setState({
+      round: { ...r, idx: next, selected: [], revealed: false, lastOk: null, timedOut: false, qDeadline: r.mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0 }
+    });
+  }
+  primary() {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q) return;
+    if (r.revealed) { this.advance(); return; }
+    if (!this.complete(q, r.selected)) return;
+    if (this.state.instant || r.mode === 'sprint') {
+      const round = this.record(r, q, r.selected, false);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else {
+      const round = this.record(r, q, r.selected, false);
+      this.advance(round);
+    }
+  }
+  tick() {
+    const r = this.state.round;
+    if (!r || this.state.view !== 'round' || r.mode !== 'sprint' || r.revealed || !r.qDeadline) return;
+    if (Date.now() >= r.qDeadline) {
+      const q = this.curQ();
+      const round = this.record(r, q, r.selected, true);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else this.forceUpdate();
+  }
+  levelOf(xp) {
+    let l = 1, need = 150, rem = xp;
+    while (rem >= need) { rem -= need; l++; need = 150 + 50 * (l - 1); }
+    return { l, into: rem, need };
+  }
+  renderVals() {
+    const INK = '#141414', CREAM = '#F5F1E8', ORANGE = '#FF4D00', MUTE = '#57514B', IDLE = '#CFC8BA';
+    const s = this.state;
+    const lv = this.levelOf(s.xp);
+    const r = s.round;
+    const q = this.curQ();
+    const revealFeedback = !!(r && r.revealed);
+    const vals = {
+      isLoading: s.loading,
+      isDash: !s.loading && s.view === 'dashboard',
+      isRound: !s.loading && s.view === 'round' && !!q,
+      isResults: !s.loading && s.view === 'results' && !!r,
+      levelNum: lv.l, xpLabel: lv.into + ' / ' + lv.need,
+      xpPct: Math.round((lv.into / lv.need) * 100), xpToNext: lv.need - lv.into, nextLevel: lv.l + 1,
+      bestStreak: s.bestStreak, roundSize: this.roundSize(), sprintSecs: this.sprintSecs(),
+      startPractice: () => this.startRound('practice'),
+      startSprint: () => this.startRound('sprint'),
+      startReview: () => this.startRound('review'),
+      exitRound: () => this.setState({ view: 'dashboard', round: null }),
+      newRound: () => this.startRound(r ? r.mode : 'practice')
+    };
+    const review = this.reviewIds();
+    vals.reviewCount = review.length;
+    vals.noReview = review.length === 0;
+    vals.reviewCursor = review.length ? 'pointer' : 'not-allowed';
+    vals.reviewOpacity = review.length ? 1 : 0.35;
+    vals.reviewHoverBg = review.length ? INK : 'transparent';
+    vals.reviewHoverFg = review.length ? CREAM : INK;
+    vals.reviewMsg = review.length ? 'Missed questions waiting. One correct answer clears each.' : 'Nothing to review. Miss a question and it lands here.';
+    vals.chips = [['all', 'All'], ['cloud-concepts', 'Cloud concepts'], ['architecture-services', 'Architecture'], ['management-governance', 'Governance']].map(([id, label]) => ({
+      label, pick: () => this.setState({ domain: id }, () => this.persist()),
+      bg: s.domain === id ? INK : 'transparent',
+      fg: s.domain === id ? CREAM : INK
+    }));
+    vals.fbModes = [['Instant', true], ['End of round', false]].map(([label, v]) => ({
+      label, pick: () => this.setState({ instant: v }, () => this.persist()),
+      bg: s.instant === v ? INK : 'transparent',
+      fg: s.instant === v ? CREAM : INK
+    }));
+    const byId = new Map(s.questions.map((qq) => [qq.id, qq]));
+    const domAgg = {}, topAgg = {};
+    for (const a of s.log) {
+      const qq = byId.get(a.q); if (!qq) continue;
+      (domAgg[qq.domain] = domAgg[qq.domain] || { n: 0, ok: 0 }).n++;
+      if (a.ok) domAgg[qq.domain].ok++;
+      (topAgg[qq.topic] = topAgg[qq.topic] || { n: 0, ok: 0 }).n++;
+      if (a.ok) topAgg[qq.topic].ok++;
+    }
+    vals.domRows = Object.entries(this.DOMAINS).map(([id, label]) => {
+      const g = domAgg[id];
+      return { label, pct: g ? Math.round((g.ok / g.n) * 100) : 0, meta: g ? Math.round((g.ok / g.n) * 100) + '% · ' + g.n + ' answered' : 'No answers yet' };
+    });
+    const weak = Object.entries(topAgg).filter(([, g]) => g.n >= 4 && g.ok / g.n < 0.7);
+    vals.weakRows = weak.map(([id, g]) => ({ label: this.TOPICS[id] || id, pct: Math.round((g.ok / g.n) * 100) }));
+    vals.hasWeak = weak.length > 0;
+    vals.noWeak = weak.length === 0;
+    vals.weakEmptyMsg = s.log.length ? 'No weak areas flagged. A topic is flagged below 70% accuracy after 4 answers.' : 'Answer a few rounds and weak topics show up here.';
+    if (r && q) {
+      const n = r.qids.length;
+      vals.qNumStr = String(r.idx + 1).padStart(2, '0');
+      vals.qTotal = n;
+      vals.qDomain = this.DOMAINS[q.domain];
+      vals.showCombo = r.streak >= 2 && !(revealFeedback && !r.lastOk);
+      vals.comboN = r.streak;
+      vals.roundXp = r.xpGained;
+      vals.isSprint = r.mode === 'sprint';
+      vals.isMulti = q.kind === 'multi';
+      vals.needCount = q.correct.length;
+      vals.stem = q.stem;
+      const eor = !s.instant && r.mode !== 'sprint';
+      vals.segs = Array.from({ length: n }, (_, i) => {
+        if (i < r.results.length) {
+          if (eor) return { bg: '#A39C8F', bd: '2px solid transparent', anim: 'none' };
+          return { bg: r.results[i].ok ? ORANGE : INK, bd: '2px solid transparent', anim: 'none' };
+        }
+        if (i === r.idx) return { bg: CREAM, bd: '2px solid ' + INK, anim: 'blink 1.2s step-end infinite' };
+        return { bg: '#E3DDD1', bd: '2px solid transparent', anim: 'none' };
+      });
+      if (r.mode === 'sprint') {
+        const secs = this.sprintSecs();
+        const rem = r.qDeadline ? Math.max(0, (r.qDeadline - Date.now()) / 1000) : 0;
+        vals.timePct = Math.round((rem / secs) * 100);
+        vals.timeColor = rem <= 5 ? INK : ORANGE;
+        vals.timeStr = r.qDeadline ? '0:' + String(Math.ceil(rem)).padStart(2, '0') : '—';
+      }
+      const cset = new Set(q.correct);
+      vals.opts = q.options.map((op, i) => {
+        const selN = r.selected.includes(op.id);
+        const letter = String.fromCharCode(97 + i);
+        if (!revealFeedback) {
+          return {
+            letter, text: op.text, explanation: op.explanation, pick: () => this.pick(op.id),
+            bd: selN ? INK : IDLE, bg: 'transparent', txt: INK, cursor: 'pointer', hoverBd: INK,
+            chipBd: INK, chipBg: selN ? INK : 'transparent', chipFg: selN ? CREAM : INK,
+            tag: '', tagBg: '', tagFg: '', showExp: false, expColor: MUTE
+          };
+        }
+        const isC = cset.has(op.id);
+        const wrongPick = selN && !isC;
+        if (isC) return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: INK, bg: ORANGE, txt: INK, cursor: 'default', hoverBd: INK,
+          chipBd: INK, chipBg: INK, chipFg: CREAM,
+          tag: selN ? 'Correct' : 'Correct answer', tagBg: INK, tagFg: CREAM,
+          showExp: true, expColor: INK
+        };
+        if (wrongPick) return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: INK, bg: INK, txt: CREAM, cursor: 'default', hoverBd: INK,
+          chipBd: CREAM, chipBg: 'transparent', chipFg: CREAM,
+          tag: 'Your pick', tagBg: ORANGE, tagFg: INK,
+          showExp: true, expColor: '#CFC8BA'
+        };
+        return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: IDLE, bg: 'transparent', txt: MUTE, cursor: 'default', hoverBd: IDLE,
+          chipBd: IDLE, chipBg: 'transparent', chipFg: MUTE,
+          tag: '', tagBg: '', tagFg: '', showExp: true, expColor: MUTE
+        };
+      });
+      vals.revealMsg = revealFeedback ? (r.lastOk ? 'Correct +' + r.lastGain + ' XP' : r.timedOut ? 'Time up' : 'Wrong') : '';
+      vals.revealBg = r.lastOk ? ORANGE : INK;
+      vals.revealFg = r.lastOk ? INK : CREAM;
+      vals.showLearn = revealFeedback && !!q.learnMore;
+      vals.learnMore = q.learnMore || '';
+      const isLast = r.idx === n - 1;
+      vals.primaryLabel = revealFeedback ? (isLast ? 'See results' : 'Next') : eor ? (isLast ? 'Finish' : 'Next') : 'Submit';
+      vals.primaryDisabled = !revealFeedback && !this.complete(q, r.selected);
+      vals.primaryOpacity = vals.primaryDisabled ? 0.35 : 1;
+      vals.primaryCursor = vals.primaryDisabled ? 'not-allowed' : 'pointer';
+      vals.primaryHoverBg = vals.primaryDisabled ? INK : ORANGE;
+      vals.primaryHoverFg = vals.primaryDisabled ? CREAM : INK;
+      vals.primaryAction = () => this.primary();
+    }
+    if (s.view === 'results' && r) {
+      const total = r.results.length;
+      const okN = r.results.filter((x) => x.ok).length;
+      const before = this.levelOf(r.xpStart).l;
+      vals.leveledUp = lv.l > before;
+      vals.resPct = total ? Math.round((okN / total) * 100) : 0;
+      vals.resCorrect = okN + ' / ' + total;
+      vals.resXp = r.xpGained;
+      vals.resCombo = r.best;
+      vals.resultHeadline = okN === total ? 'Perfect round' : okN / total >= 0.7 ? 'Round complete' : 'Keep at it';
+      vals.hasMissed = okN < total;
+      vals.resRows = r.results.map((res, i) => {
+        const qq = byId.get(res.qid);
+        const open = s.openRow === i;
+        const cset = new Set(qq.correct);
+        return {
+          numStr: String(i + 1).padStart(2, '0'), stem: qq.stem, fullStem: qq.stem,
+          mkBg: res.ok ? ORANGE : INK, mkFg: res.ok ? INK : CREAM, mk: res.ok ? '✓' : '✕',
+          chev: open ? '−' : '+',
+          open, toggle: () => this.setState({ openRow: open ? -1 : i }),
+          hasLearn: !!qq.learnMore, learnMore: qq.learnMore || '',
+          opts: qq.options.map((op, j) => {
+            const isC = cset.has(op.id);
+            const picked = res.selected.includes(op.id);
+            return {
+              letter: String.fromCharCode(97 + j), text: op.text, explanation: op.explanation,
+              bd: isC || picked ? INK : IDLE,
+              bg: isC ? ORANGE : 'transparent', txt: INK,
+              tag: isC ? (picked ? 'Correct' : 'Correct answer') : picked ? 'Your pick' : '',
+              tagBg: INK, tagFg: CREAM,
+              expColor: isC ? INK : MUTE
+            };
+          })
+        };
+      });
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

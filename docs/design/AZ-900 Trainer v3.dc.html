@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&amp;family=JetBrains+Mono:wght@400;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    html,body{margin:0;padding:0;background:#14141F}
+    a{color:#A78BFA;text-decoration:none}
+    a:hover{color:#C4B5FD;text-decoration:underline}
+    button{font-family:inherit}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes pulseSeg{50%{opacity:.45}}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:#14141F;color:#E6E6F0;font:400 15px/1.55 'Nunito Sans',sans-serif">
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 28px;border-bottom:1px solid #2A2A3E;background:#181826;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:26px;height:26px;background:linear-gradient(135deg,#8B5CF6,#6D28D9);border-radius:6px;display:flex;align-items:center;justify-content:center;font:700 13px/1 'JetBrains Mono',monospace;color:#fff">A</div>
+      <span style="font:800 17px/1 'Nunito Sans',sans-serif">AZ-900 Trainer</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:20px">
+      <span style="display:inline-flex;align-items:center;gap:6px;background:#2A2338;border:1px solid #4A3A68;color:#FFC53D;font:700 12px/1 'JetBrains Mono',monospace;padding:6px 10px;border-radius:999px">LVL {{ levelNum }}</span>
+      <div style="width:160px">
+        <div style="display:flex;justify-content:space-between;font:600 10px/1 'JetBrains Mono',monospace;color:#9494B0;margin-bottom:5px"><span>XP</span><span>{{ xpLabel }}</span></div>
+        <div style="height:8px;background:#26263A;border-radius:999px;overflow:hidden"><div style="height:8px;background:linear-gradient(90deg,#FFC53D,#FF9F1C);width:{{ xpPct }}%;transition:width .25s ease;border-radius:999px"></div></div>
+      </div>
+    </div>
+  </header>
+  <main style="flex:1;display:flex;flex-direction:column">
+    <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
+      <p style="font:600 12px/1 'JetBrains Mono',monospace;letter-spacing:.15em;text-transform:uppercase;color:#9494B0;text-align:center;padding:120px 32px">Loading question bank…</p>
+    </sc-if>
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1040px;margin:0 auto;padding:48px 28px 72px;width:100%;box-sizing:border-box;animation:fadeUp .25s ease-out">
+        <h1 style="font:900 clamp(30px,4.5vw,44px)/1.15 'Nunito Sans',sans-serif;margin:0 0 10px">Level up your Azure fundamentals.</h1>
+        <p style="font:400 17px/1.5 'Nunito Sans',sans-serif;color:#9494B0;margin:0 0 36px;max-width:58ch">90 original questions across all three AZ-900 domains. Ten at a time, one per screen — streaks multiply your XP.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:18px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:10px">Level</div>
+            <div style="font:800 34px/1 'Nunito Sans',sans-serif;color:#FFC53D">{{ levelNum }}</div>
+            <div style="font:600 11px/1.4 'JetBrains Mono',monospace;color:#9494B0;margin-top:6px">{{ xpToNext }} XP to lvl {{ nextLevel }}</div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:18px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:10px">Total XP</div>
+            <div style="font:800 34px/1 'Nunito Sans',sans-serif">{{ xpTotal }}</div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:18px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:10px">Best streak</div>
+            <div style="font:800 34px/1 'Nunito Sans',sans-serif;color:#8B5CF6">×{{ bestStreak }}</div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:18px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:10px">To review</div>
+            <div style="font:800 34px/1 'Nunito Sans',sans-serif">{{ reviewCount }}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px;margin-top:32px">
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px;transition:border-color .15s" style-hover="border-color:#8B5CF6">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:10px;height:10px;border-radius:3px;background:#8B5CF6"></span>
+              <h2 style="font:800 19px/1 'Nunito Sans',sans-serif;margin:0">Practice round</h2>
+            </div>
+            <p style="margin:0;font:400 14px/1.5 'Nunito Sans',sans-serif;color:#9494B0">{{ roundSize }} questions with streak bonuses and an explanation for every option.</p>
+            <div>
+              <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:8px">Domains</div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.pick }}" style="font:700 12px/1 'Nunito Sans',sans-serif;padding:7px 13px;border-radius:999px;cursor:pointer;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};transition:all .12s">{{ c.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:8px">Feedback</div>
+              <div style="display:flex;background:#14141F;border:1px solid #2A2A3E;border-radius:8px;padding:3px;gap:3px">
+                <sc-for list="{{ fbModes }}" as="f" hint-placeholder-count="2">
+                  <button onClick="{{ f.pick }}" style="flex:1;font:700 12px/1 'Nunito Sans',sans-serif;padding:8px;cursor:pointer;border:none;border-radius:6px;background:{{ f.bg }};color:{{ f.fg }};transition:all .12s">{{ f.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <button onClick="{{ startPractice }}" style="margin-top:auto;width:100%;font:800 14px/1 'Nunito Sans',sans-serif;padding:14px;cursor:pointer;border:none;border-radius:10px;background:#8B5CF6;color:#fff;transition:background .12s" style-hover="background:#7C4DDB">Start round</button>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px;transition:border-color .15s" style-hover="border-color:#22D3EE">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:10px;height:10px;border-radius:3px;background:#22D3EE"></span>
+              <h2 style="font:800 19px/1 'Nunito Sans',sans-serif;margin:0">Sprint</h2>
+            </div>
+            <p style="margin:0;font:400 14px/1.5 'Nunito Sans',sans-serif;color:#9494B0">Beat the clock. Correct answers earn a speed bonus. No pausing.</p>
+            <div style="display:flex;align-items:baseline;gap:10px">
+              <span style="font:700 44px/1 'JetBrains Mono',monospace;color:#22D3EE">{{ sprintSecs }}s</span>
+              <span style="font:600 10px/1.4 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#9494B0">per question</span>
+            </div>
+            <button onClick="{{ startSprint }}" style="margin-top:auto;width:100%;font:800 14px/1 'Nunito Sans',sans-serif;padding:14px;cursor:pointer;border:1px solid #22D3EE;border-radius:10px;background:transparent;color:#22D3EE;transition:all .12s" style-hover="background:rgba(34,211,238,.12)">Start sprint</button>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px;transition:border-color .15s" style-hover="border-color:#FFC53D">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="width:10px;height:10px;border-radius:3px;background:#FFC53D"></span>
+              <h2 style="font:800 19px/1 'Nunito Sans',sans-serif;margin:0">Review</h2>
+            </div>
+            <p style="margin:0;font:400 14px/1.5 'Nunito Sans',sans-serif;color:#9494B0">{{ reviewMsg }}</p>
+            <div style="font:700 44px/1 'JetBrains Mono',monospace;color:#FFC53D">{{ reviewCount }}</div>
+            <button onClick="{{ startReview }}" disabled="{{ noReview }}" style="margin-top:auto;width:100%;font:800 14px/1 'Nunito Sans',sans-serif;padding:14px;cursor:{{ reviewCursor }};border:1px solid #FFC53D;border-radius:10px;background:transparent;color:#FFC53D;transition:all .12s;opacity:{{ reviewOpacity }}" style-hover="background:{{ reviewHoverBg }}">Review missed</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:32px">
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:14px;padding:24px">
+            <h3 style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin:0 0 20px">Accuracy by domain</h3>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ domRows }}" as="d" hint-placeholder-count="3">
+                <div>
+                  <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:6px">
+                    <span style="font:700 13px/1.3 'Nunito Sans',sans-serif">{{ d.label }}</span>
+                    <span style="font:600 11px/1.5 'JetBrains Mono',monospace;color:#9494B0">{{ d.meta }}</span>
+                  </div>
+                  <div style="height:8px;background:#26263A;border-radius:999px;overflow:hidden"><div style="height:8px;background:#8B5CF6;width:{{ d.pct }}%;transition:width .25s;border-radius:999px"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:14px;padding:24px">
+            <h3 style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin:0 0 20px">Weak areas</h3>
+            <sc-if value="{{ hasWeak }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ weakRows }}" as="w" hint-placeholder-count="2">
+                  <div style="display:flex;justify-content:space-between;gap:16px;padding:11px 14px;background:#221A26;border:1px solid #4A2E38;border-radius:10px">
+                    <span style="font:600 13px/1.4 'Nunito Sans',sans-serif">{{ w.label }}</span>
+                    <span style="font:700 12px/1.5 'JetBrains Mono',monospace;color:#F87171">{{ w.pct }}%</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noWeak }}" hint-placeholder-val="{{ true }}">
+              <p style="margin:0;font:400 14px/1.5 'Nunito Sans',sans-serif;color:#9494B0">{{ weakEmptyMsg }}</p>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isRound }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:780px;margin:0 auto;padding:32px 28px 72px;width:100%;box-sizing:border-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font:700 12px/1 'JetBrains Mono',monospace;color:#E6E6F0">{{ qNumStr }}/{{ qTotal }}</span>
+            <span style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#9494B0">{{ qDomain }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <sc-if value="{{ showCombo }}" hint-placeholder-val="{{ false }}">
+              <span style="background:rgba(139,92,246,.18);border:1px solid #8B5CF6;color:#C4B5FD;font:700 11px/1 'JetBrains Mono',monospace;padding:5px 10px;border-radius:999px">COMBO ×{{ comboN }}</span>
+            </sc-if>
+            <span style="font:700 12px/1 'JetBrains Mono',monospace;color:#FFC53D">+{{ roundXp }} XP</span>
+            <button onClick="{{ exitRound }}" style="font:700 12px/1 'Nunito Sans',sans-serif;padding:7px 14px;cursor:pointer;border:1px solid #2A2A3E;border-radius:8px;background:transparent;color:#9494B0;transition:all .12s" style-hover="border-color:#9494B0;color:#E6E6F0">Exit</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:5px;margin:16px 0 0">
+          <sc-for list="{{ segs }}" as="s" hint-placeholder-count="10">
+            <div style="flex:1;height:7px;border-radius:999px;background:{{ s.bg }};animation:{{ s.anim }};transition:background .12s"></div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ isSprint }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+            <div style="flex:1;height:7px;background:#26263A;border-radius:999px;overflow:hidden"><div style="height:100%;background:{{ timeColor }};width:{{ timePct }}%;border-radius:999px"></div></div>
+            <span style="font:700 15px/1 'JetBrains Mono',monospace;min-width:44px;text-align:right;color:{{ timeColor }}">{{ timeStr }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isMulti }}" hint-placeholder-val="{{ false }}">
+          <span style="display:inline-block;margin-top:26px;background:#26263A;color:#C4B5FD;font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;border-radius:999px">Select {{ needCount }}</span>
+        </sc-if>
+        <h2 style="font:800 clamp(18px,2.6vw,23px)/1.4 'Nunito Sans',sans-serif;margin:20px 0 24px">{{ stem }}</h2>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
+            <div onClick="{{ o.pick }}" style="display:flex;gap:14px;align-items:flex-start;padding:15px 16px;border:1px solid {{ o.bd }};background:{{ o.bg }};border-radius:12px;cursor:{{ o.cursor }};transition:border-color .12s,background .12s" style-hover="border-color:{{ o.hoverBd }}">
+              <div style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:700 12px/1 'JetBrains Mono',monospace;text-transform:uppercase;border:1px solid {{ o.chipBd }};background:{{ o.chipBg }};color:{{ o.chipFg }};border-radius:8px">{{ o.letter }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                  <span style="font:600 14.5px/1.5 'Nunito Sans',sans-serif;color:{{ o.txt }};flex:1;min-width:200px">{{ o.text }}</span>
+                  <sc-if value="{{ o.tag }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:700 10px/1 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;border-radius:999px;background:{{ o.tagBg }};color:{{ o.tagFg }};white-space:nowrap">{{ o.tag }}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ o.showExp }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:8px 0 0;font:400 13px/1.55 'Nunito Sans',sans-serif;color:{{ o.expColor }};max-width:66ch">{{ o.explanation }}</p>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:14px">
+            <sc-if value="{{ revealMsg }}" hint-placeholder-val="{{ false }}">
+              <span style="background:{{ revealBg }};color:{{ revealFg }};border:1px solid {{ revealBd }};font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:8px">{{ revealMsg }}</span>
+            </sc-if>
+            <sc-if value="{{ showLearn }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ learnMore }}" target="_blank" style="font:700 13px/1 'Nunito Sans',sans-serif">Learn more →</a>
+            </sc-if>
+          </div>
+          <button onClick="{{ primaryAction }}" disabled="{{ primaryDisabled }}" style="font:800 14px/1 'Nunito Sans',sans-serif;padding:14px 30px;cursor:{{ primaryCursor }};border:none;border-radius:10px;background:#8B5CF6;color:#fff;transition:background .12s;opacity:{{ primaryOpacity }}" style-hover="background:{{ primaryHoverBg }}">{{ primaryLabel }}</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:860px;margin:0 auto;padding:48px 28px 72px;width:100%;box-sizing:border-box;animation:fadeUp .25s ease-out">
+        <sc-if value="{{ leveledUp }}" hint-placeholder-val="{{ false }}">
+          <div style="background:linear-gradient(135deg,rgba(255,197,61,.16),rgba(139,92,246,.16));border:1px solid #FFC53D;border-radius:14px;padding:18px 24px;margin-bottom:28px">
+            <span style="font:800 20px/1 'Nunito Sans',sans-serif;color:#FFC53D">Level {{ levelNum }} reached!</span>
+          </div>
+        </sc-if>
+        <div style="display:flex;align-items:baseline;gap:20px;flex-wrap:wrap">
+          <span style="font:700 clamp(64px,11vw,110px)/0.95 'JetBrains Mono',monospace">{{ resPct }}<span style="color:#8B5CF6">%</span></span>
+          <h1 style="font:900 clamp(24px,3.6vw,34px)/1.1 'Nunito Sans',sans-serif;margin:0">{{ resultHeadline }}</h1>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:30px">
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:16px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:8px">Correct</div>
+            <div style="font:800 28px/1 'Nunito Sans',sans-serif">{{ resCorrect }}</div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:16px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:8px">XP earned</div>
+            <div style="font:800 28px/1 'Nunito Sans',sans-serif;color:#FFC53D">+{{ resXp }}</div>
+          </div>
+          <div style="background:#1C1C2B;border:1px solid #2A2A3E;border-radius:12px;padding:16px 20px">
+            <div style="font:600 10px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin-bottom:8px">Best combo</div>
+            <div style="font:800 28px/1 'Nunito Sans',sans-serif;color:#8B5CF6">×{{ resCombo }}</div>
+          </div>
+        </div>
+        <h3 style="font:600 11px/1 'JetBrains Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#9494B0;margin:40px 0 14px">Breakdown</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ resRows }}" as="r" hint-placeholder-count="10">
+            <div style="border:1px solid #2A2A3E;border-radius:12px;background:#1C1C2B;overflow:hidden">
+              <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer" style-hover="background:#232335">
+                <div style="width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:700 12px/1 'JetBrains Mono',monospace;background:{{ r.mkBg }};color:{{ r.mkFg }};border-radius:7px">{{ r.mk }}</div>
+                <span style="font:700 11px/1 'JetBrains Mono',monospace;color:#9494B0">{{ r.numStr }}</span>
+                <span style="flex:1;min-width:0;font:600 13.5px/1.4 'Nunito Sans',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.stem }}</span>
+                <span style="font:700 15px/1 'JetBrains Mono',monospace;color:#9494B0">{{ r.chev }}</span>
+              </div>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:4px 16px 16px;display:flex;flex-direction:column;gap:8px;border-top:1px solid #2A2A3E">
+                  <p style="margin:12px 0 4px;font:600 14px/1.5 'Nunito Sans',sans-serif">{{ r.fullStem }}</p>
+                  <sc-for list="{{ r.opts }}" as="ro" hint-placeholder-count="4">
+                    <div style="padding:10px 12px;border:1px solid {{ ro.bd }};background:{{ ro.bg }};border-radius:10px">
+                      <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                        <span style="font:400 13px/1.5 'Nunito Sans',sans-serif;flex:1;min-width:200px"><strong style="font:700 12px/1 'JetBrains Mono',monospace;text-transform:uppercase">{{ ro.letter }}</strong> — {{ ro.text }}</span>
+                        <sc-if value="{{ ro.tag }}" hint-placeholder-val="{{ false }}">
+                          <span style="font:700 9px/1 'JetBrains Mono',monospace;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:{{ ro.tagBg }};color:{{ ro.tagFg }};white-space:nowrap">{{ ro.tag }}</span>
+                        </sc-if>
+                      </div>
+                      <p style="margin:6px 0 0;font:400 12.5px/1.55 'Nunito Sans',sans-serif;color:#9494B0;max-width:70ch">{{ ro.explanation }}</p>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ r.hasLearn }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ r.learnMore }}" target="_blank" style="font:700 13px/1 'Nunito Sans',sans-serif;margin-top:4px;align-self:flex-start">Learn more →</a>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:32px;flex-wrap:wrap">
+          <button onClick="{{ newRound }}" style="font:800 14px/1 'Nunito Sans',sans-serif;padding:14px 30px;cursor:pointer;border:none;border-radius:10px;background:#8B5CF6;color:#fff;transition:background .12s" style-hover="background:#7C4DDB">New round</button>
+          <sc-if value="{{ hasMissed }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ startReview }}" style="font:800 14px/1 'Nunito Sans',sans-serif;padding:14px 30px;cursor:pointer;border:1px solid #FFC53D;border-radius:10px;background:transparent;color:#FFC53D;transition:all .12s" style-hover="background:rgba(255,197,61,.12)">Review missed</button>
+          </sc-if>
+          <button onClick="{{ exitRound }}" style="font:800 14px/1 'Nunito Sans',sans-serif;padding:14px 30px;cursor:pointer;border:1px solid #2A2A3E;border-radius:10px;background:transparent;color:#9494B0;transition:all .12s" style-hover="border-color:#9494B0;color:#E6E6F0">Dashboard</button>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+  <footer style="border-top:1px solid #2A2A3E;padding:18px 28px;text-align:center">
+    <p style="margin:0;font:400 12px/1.5 'Nunito Sans',sans-serif;color:#9494B0">Unofficial study aid. Not affiliated with or endorsed by Microsoft. Question bank: AZ-900 skills measured as of July 20, 2026.</p>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;roundSize&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:5,&quot;max&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;},&quot;sprintSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:20,&quot;min&quot;:10,&quot;max&quot;:40,&quot;step&quot;:5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'dashboard', loading: true, questions: [], log: [], xp: 0, bestStreak: 0, instant: true, domain: 'all', round: null, openRow: -1 };
+  KEY = 'az900-trainer-redesign/v1';
+  DOMAINS = {
+    'cloud-concepts': 'Cloud concepts',
+    'architecture-services': 'Architecture & services',
+    'management-governance': 'Management & governance'
+  };
+  TOPICS = {
+    'describe-cloud-computing': 'Describe cloud computing',
+    'benefits-of-cloud-services': 'Benefits of cloud services',
+    'cloud-service-types': 'Cloud service types',
+    'core-architectural-components': 'Core architectural components',
+    'compute-networking': 'Compute and networking',
+    'storage': 'Storage services',
+    'identity-access-security': 'Identity, access, and security',
+    'cost-management': 'Cost management',
+    'governance-compliance': 'Governance and compliance',
+    'managing-deploying-resources': 'Managing and deploying resources',
+    'monitoring-tools': 'Monitoring tools'
+  };
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        this.setState({ log: d.log || [], xp: d.xp || 0, bestStreak: d.bestStreak || 0, instant: d.instant !== false, domain: d.domain || 'all' });
+      }
+    } catch (e) {}
+    fetch('questions.json').then((r) => r.json()).then((qs) => this.setState({ questions: qs, loading: false }));
+    this.timer = setInterval(() => this.tick(), 200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  persist() {
+    const s = this.state;
+    try { localStorage.setItem(this.KEY, JSON.stringify({ log: s.log, xp: s.xp, bestStreak: s.bestStreak, instant: s.instant, domain: s.domain })); } catch (e) {}
+  }
+  roundSize() { return Math.max(3, Math.min(20, this.props.roundSize ?? 10)); }
+  sprintSecs() { return Math.max(5, Math.min(60, this.props.sprintSeconds ?? 20)); }
+  lastByQ() {
+    const m = new Map();
+    for (const a of this.state.log) { const p = m.get(a.q); if (!p || a.t > p.t) m.set(a.q, a); }
+    return m;
+  }
+  reviewIds() {
+    const last = this.lastByQ();
+    const bank = new Set(this.state.questions.map((q) => q.id));
+    const ids = [];
+    for (const [q, a] of last) if (!a.ok && bank.has(q)) ids.push(q);
+    return ids;
+  }
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    return arr;
+  }
+  draw(mode) {
+    const { questions, domain } = this.state;
+    let pool;
+    if (mode === 'review') { const set = new Set(this.reviewIds()); pool = questions.filter((q) => set.has(q.id)); }
+    else pool = domain === 'all' ? questions.slice() : questions.filter((q) => q.domain === domain);
+    const last = this.lastByQ();
+    const fresh = this.shuffle(pool.filter((q) => !last.has(q.id)));
+    const seen = this.shuffle(pool.filter((q) => last.has(q.id))).sort((a, b) => (last.get(a.id).t < last.get(b.id).t ? -1 : 1));
+    return this.shuffle(fresh.concat(seen).slice(0, Math.min(this.roundSize(), pool.length)));
+  }
+  startRound(mode) {
+    if (this.state.loading) return;
+    const qs = this.draw(mode);
+    if (!qs.length) return;
+    this.setState({
+      view: 'round', openRow: -1,
+      round: {
+        mode, qids: qs.map((q) => q.id), idx: 0, selected: [], revealed: false, results: [],
+        streak: 0, best: 0, xpGained: 0, xpStart: this.state.xp, lastGain: 0, lastOk: null, timedOut: false,
+        qDeadline: mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0
+      }
+    });
+  }
+  curQ() { const r = this.state.round; return r ? this.state.questions.find((q) => q.id === r.qids[r.idx]) : null; }
+  complete(q, sel) { return q.kind === 'single' ? sel.length === 1 : new Set(sel).size === q.correct.length && sel.length === q.correct.length; }
+  correct(q, sel) {
+    if (sel.length !== q.correct.length || new Set(sel).size !== q.correct.length) return false;
+    const c = new Set(q.correct); return sel.every((id) => c.has(id));
+  }
+  pick(optId) {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q || r.revealed) return;
+    let sel;
+    if (q.kind === 'single') sel = [optId];
+    else if (r.selected.includes(optId)) sel = r.selected.filter((x) => x !== optId);
+    else if (r.selected.length >= q.correct.length) return;
+    else sel = r.selected.concat(optId);
+    this.setState({ round: { ...r, selected: sel } });
+  }
+  record(r, q, sel, timedOut) {
+    const ok = this.correct(q, sel);
+    const streak = ok ? r.streak + 1 : 0;
+    const gain = ok ? 10 + Math.min(2 * (streak - 1), 10) + (r.mode === 'sprint' ? 5 : 0) : 0;
+    const log = this.state.log.concat({ q: q.id, ok, t: new Date().toISOString() });
+    const xp = this.state.xp + gain;
+    const bestStreak = Math.max(this.state.bestStreak, streak);
+    const round = {
+      ...r, streak, best: Math.max(r.best, streak), xpGained: r.xpGained + gain,
+      lastGain: gain, lastOk: ok, timedOut: !!timedOut,
+      results: r.results.concat({ qid: q.id, selected: sel.slice(), ok })
+    };
+    this.setState({ log, xp, bestStreak, round }, () => this.persist());
+    return round;
+  }
+  advance(round) {
+    const r = round || this.state.round;
+    const next = r.idx + 1;
+    if (next >= r.qids.length) { this.setState({ view: 'results', round: { ...r, revealed: false }, openRow: -1 }); return; }
+    this.setState({
+      round: { ...r, idx: next, selected: [], revealed: false, lastOk: null, timedOut: false, qDeadline: r.mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0 }
+    });
+  }
+  primary() {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q) return;
+    if (r.revealed) { this.advance(); return; }
+    if (!this.complete(q, r.selected)) return;
+    if (this.state.instant || r.mode === 'sprint') {
+      const round = this.record(r, q, r.selected, false);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else {
+      const round = this.record(r, q, r.selected, false);
+      this.advance(round);
+    }
+  }
+  tick() {
+    const r = this.state.round;
+    if (!r || this.state.view !== 'round' || r.mode !== 'sprint' || r.revealed || !r.qDeadline) return;
+    if (Date.now() >= r.qDeadline) {
+      const q = this.curQ();
+      const round = this.record(r, q, r.selected, true);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else this.forceUpdate();
+  }
+  levelOf(xp) {
+    let l = 1, need = 150, rem = xp;
+    while (rem >= need) { rem -= need; l++; need = 150 + 50 * (l - 1); }
+    return { l, into: rem, need };
+  }
+  renderVals() {
+    const PURPLE = '#8B5CF6', GOLD = '#FFC53D', GREEN = '#34D399', RED = '#F87171', CYAN = '#22D3EE';
+    const BORDER = '#2A2A3E', MUTED = '#9494B0', TEXT = '#E6E6F0', SURF = '#1C1C2B';
+    const s = this.state;
+    const lv = this.levelOf(s.xp);
+    const r = s.round;
+    const q = this.curQ();
+    const revealFeedback = !!(r && r.revealed);
+    const vals = {
+      isLoading: s.loading,
+      isDash: !s.loading && s.view === 'dashboard',
+      isRound: !s.loading && s.view === 'round' && !!q,
+      isResults: !s.loading && s.view === 'results' && !!r,
+      levelNum: lv.l, xpTotal: s.xp, xpLabel: lv.into + '/' + lv.need,
+      xpPct: Math.round((lv.into / lv.need) * 100), xpToNext: lv.need - lv.into, nextLevel: lv.l + 1,
+      bestStreak: s.bestStreak, roundSize: this.roundSize(), sprintSecs: this.sprintSecs(),
+      startPractice: () => this.startRound('practice'),
+      startSprint: () => this.startRound('sprint'),
+      startReview: () => this.startRound('review'),
+      exitRound: () => this.setState({ view: 'dashboard', round: null }),
+      newRound: () => this.startRound(r ? r.mode : 'practice')
+    };
+    const review = this.reviewIds();
+    vals.reviewCount = review.length;
+    vals.noReview = review.length === 0;
+    vals.reviewCursor = review.length ? 'pointer' : 'not-allowed';
+    vals.reviewOpacity = review.length ? 1 : 0.4;
+    vals.reviewHoverBg = review.length ? 'rgba(255,197,61,.12)' : 'transparent';
+    vals.reviewMsg = review.length ? 'Missed questions waiting. One correct answer clears each.' : 'Nothing to review. Miss a question and it lands here.';
+    vals.chips = [['all', 'All'], ['cloud-concepts', 'Cloud concepts'], ['architecture-services', 'Architecture'], ['management-governance', 'Governance']].map(([id, label]) => ({
+      label, pick: () => this.setState({ domain: id }, () => this.persist()),
+      bg: s.domain === id ? 'rgba(139,92,246,.2)' : 'transparent',
+      fg: s.domain === id ? '#C4B5FD' : MUTED,
+      bd: s.domain === id ? PURPLE : BORDER
+    }));
+    vals.fbModes = [['Instant', true], ['End of round', false]].map(([label, v]) => ({
+      label, pick: () => this.setState({ instant: v }, () => this.persist()),
+      bg: s.instant === v ? PURPLE : 'transparent',
+      fg: s.instant === v ? '#fff' : MUTED
+    }));
+    const byId = new Map(s.questions.map((qq) => [qq.id, qq]));
+    const domAgg = {}, topAgg = {};
+    for (const a of s.log) {
+      const qq = byId.get(a.q); if (!qq) continue;
+      (domAgg[qq.domain] = domAgg[qq.domain] || { n: 0, ok: 0 }).n++;
+      if (a.ok) domAgg[qq.domain].ok++;
+      (topAgg[qq.topic] = topAgg[qq.topic] || { n: 0, ok: 0 }).n++;
+      if (a.ok) topAgg[qq.topic].ok++;
+    }
+    vals.domRows = Object.entries(this.DOMAINS).map(([id, label]) => {
+      const g = domAgg[id];
+      return { label, pct: g ? Math.round((g.ok / g.n) * 100) : 0, meta: g ? Math.round((g.ok / g.n) * 100) + '% · ' + g.n : 'no data' };
+    });
+    const weak = Object.entries(topAgg).filter(([, g]) => g.n >= 4 && g.ok / g.n < 0.7);
+    vals.weakRows = weak.map(([id, g]) => ({ label: this.TOPICS[id] || id, pct: Math.round((g.ok / g.n) * 100) }));
+    vals.hasWeak = weak.length > 0;
+    vals.noWeak = weak.length === 0;
+    vals.weakEmptyMsg = s.log.length ? 'No weak areas flagged. A topic is flagged below 70% accuracy after 4 answers.' : 'Answer a few rounds and weak topics show up here.';
+    if (r && q) {
+      const n = r.qids.length;
+      vals.qNumStr = String(r.idx + 1).padStart(2, '0');
+      vals.qTotal = n;
+      vals.qDomain = this.DOMAINS[q.domain];
+      vals.showCombo = r.streak >= 2 && !(revealFeedback && !r.lastOk);
+      vals.comboN = r.streak;
+      vals.roundXp = r.xpGained;
+      vals.isSprint = r.mode === 'sprint';
+      vals.isMulti = q.kind === 'multi';
+      vals.needCount = q.correct.length;
+      vals.stem = q.stem;
+      const eor = !s.instant && r.mode !== 'sprint';
+      vals.segs = Array.from({ length: n }, (_, i) => {
+        if (i < r.results.length) {
+          if (eor) return { bg: '#4A4A66', anim: 'none' };
+          return { bg: r.results[i].ok ? GREEN : RED, anim: 'none' };
+        }
+        if (i === r.idx) return { bg: PURPLE, anim: 'pulseSeg 1.4s ease-in-out infinite' };
+        return { bg: '#26263A', anim: 'none' };
+      });
+      if (r.mode === 'sprint') {
+        const secs = this.sprintSecs();
+        const rem = r.qDeadline ? Math.max(0, (r.qDeadline - Date.now()) / 1000) : 0;
+        vals.timePct = Math.round((rem / secs) * 100);
+        vals.timeColor = rem <= 5 ? RED : CYAN;
+        vals.timeStr = r.qDeadline ? '0:' + String(Math.ceil(rem)).padStart(2, '0') : '—';
+      }
+      const cset = new Set(q.correct);
+      vals.opts = q.options.map((op, i) => {
+        const selN = r.selected.includes(op.id);
+        const letter = String.fromCharCode(97 + i);
+        if (!revealFeedback) {
+          return {
+            letter, text: op.text, explanation: op.explanation, pick: () => this.pick(op.id),
+            bd: selN ? PURPLE : BORDER, bg: selN ? 'rgba(139,92,246,.12)' : SURF,
+            txt: TEXT, cursor: 'pointer', hoverBd: PURPLE,
+            chipBd: selN ? PURPLE : '#3A3A52', chipBg: selN ? PURPLE : 'transparent', chipFg: selN ? '#fff' : MUTED,
+            tag: '', tagBg: '', tagFg: '', showExp: false, expColor: MUTED
+          };
+        }
+        const isC = cset.has(op.id);
+        const wrongPick = selN && !isC;
+        if (isC) return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: GREEN, bg: 'rgba(52,211,153,.1)', txt: TEXT, cursor: 'default', hoverBd: GREEN,
+          chipBd: GREEN, chipBg: GREEN, chipFg: '#0B2B1E',
+          tag: selN ? 'Correct' : 'Correct answer', tagBg: GREEN, tagFg: '#0B2B1E',
+          showExp: true, expColor: '#B9BDD4'
+        };
+        if (wrongPick) return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: RED, bg: 'rgba(248,113,113,.08)', txt: TEXT, cursor: 'default', hoverBd: RED,
+          chipBd: RED, chipBg: RED, chipFg: '#3A0D0D',
+          tag: 'Your pick', tagBg: RED, tagFg: '#3A0D0D',
+          showExp: true, expColor: '#B9BDD4'
+        };
+        return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd: BORDER, bg: SURF, txt: MUTED, cursor: 'default', hoverBd: BORDER,
+          chipBd: '#3A3A52', chipBg: 'transparent', chipFg: MUTED,
+          tag: '', tagBg: '', tagFg: '', showExp: true, expColor: MUTED
+        };
+      });
+      vals.revealMsg = revealFeedback ? (r.lastOk ? 'Correct +' + r.lastGain + ' XP' : r.timedOut ? 'Time up' : 'Incorrect') : '';
+      vals.revealBg = r.lastOk ? 'rgba(52,211,153,.14)' : 'rgba(248,113,113,.12)';
+      vals.revealFg = r.lastOk ? GREEN : RED;
+      vals.revealBd = r.lastOk ? GREEN : RED;
+      vals.showLearn = revealFeedback && !!q.learnMore;
+      vals.learnMore = q.learnMore || '';
+      const isLast = r.idx === n - 1;
+      vals.primaryLabel = revealFeedback ? (isLast ? 'See results' : 'Next') : eor ? (isLast ? 'Finish' : 'Next') : 'Submit';
+      vals.primaryDisabled = !revealFeedback && !this.complete(q, r.selected);
+      vals.primaryOpacity = vals.primaryDisabled ? 0.4 : 1;
+      vals.primaryCursor = vals.primaryDisabled ? 'not-allowed' : 'pointer';
+      vals.primaryHoverBg = vals.primaryDisabled ? PURPLE : '#7C4DDB';
+      vals.primaryAction = () => this.primary();
+    }
+    if (s.view === 'results' && r) {
+      const total = r.results.length;
+      const okN = r.results.filter((x) => x.ok).length;
+      const before = this.levelOf(r.xpStart).l;
+      vals.leveledUp = lv.l > before;
+      vals.resPct = total ? Math.round((okN / total) * 100) : 0;
+      vals.resCorrect = okN + '/' + total;
+      vals.resXp = r.xpGained;
+      vals.resCombo = r.best;
+      vals.resultHeadline = okN === total ? 'Perfect round!' : okN / total >= 0.7 ? 'Round complete' : 'Keep at it';
+      vals.hasMissed = okN < total;
+      vals.resRows = r.results.map((res, i) => {
+        const qq = byId.get(res.qid);
+        const open = s.openRow === i;
+        const cset = new Set(qq.correct);
+        return {
+          numStr: String(i + 1).padStart(2, '0'), stem: qq.stem, fullStem: qq.stem,
+          mkBg: res.ok ? GREEN : RED, mkFg: res.ok ? '#0B2B1E' : '#3A0D0D', mk: res.ok ? '✓' : '✕',
+          chev: open ? '−' : '+',
+          open, toggle: () => this.setState({ openRow: open ? -1 : i }),
+          hasLearn: !!qq.learnMore, learnMore: qq.learnMore || '',
+          opts: qq.options.map((op, j) => {
+            const isC = cset.has(op.id);
+            const picked = res.selected.includes(op.id);
+            return {
+              letter: String.fromCharCode(97 + j), text: op.text, explanation: op.explanation,
+              bd: isC ? GREEN : picked ? RED : BORDER,
+              bg: isC ? 'rgba(52,211,153,.08)' : picked ? 'rgba(248,113,113,.06)' : '#14141F',
+              tag: isC ? (picked ? 'Correct' : 'Correct answer') : picked ? 'Your pick' : '',
+              tagBg: isC ? GREEN : RED, tagFg: isC ? '#0B2B1E' : '#3A0D0D'
+            };
+          })
+        };
+      });
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/borders.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/motion.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/tokens/base.css">
+  <link rel="stylesheet" href="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/styles.css">
+  <script src="_ds/g-ntner-design-system-3f11a056-2f38-49d2-9b6f-ccc99feb6198/_ds_bundle.js"></script>
+  <style>
+    html,body{margin:0;padding:0;background:#fff}
+    a{color:var(--rich-blue);text-decoration:none}
+    a:hover{color:var(--blue);text-decoration:underline}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  </style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column;background:var(--white);color:var(--dark-grey);font:var(--type-body);font-size:15px">
+  <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.GradientBar" height="{{ n4 }}" hint-size="100%,4px"></x-import>
+  <header style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding:14px 32px;border-bottom:1px solid var(--light-grey);flex-wrap:wrap">
+    <div style="font:300 20px/1 var(--font-display);text-transform:uppercase;letter-spacing:.02em">AZ-900 <span style="color:var(--rich-blue)">Trainer</span></div>
+    <div style="display:flex;align-items:center;gap:24px">
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey)">Level</span>
+        <span style="font:400 22px/1 var(--font-display)">{{ levelNum }}</span>
+      </div>
+      <div style="width:150px">
+        <div style="display:flex;justify-content:space-between;font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:4px"><span>XP</span><span>{{ xpLabel }}</span></div>
+        <div style="height:6px;background:var(--light-grey)"><div style="height:6px;background:var(--rich-blue);width:{{ xpPct }}%;transition:width .2s cubic-bezier(.2,0,.2,1)"></div></div>
+      </div>
+    </div>
+  </header>
+  <main style="flex:1;display:flex;flex-direction:column">
+    <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}">
+      <p style="font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);text-align:center;padding:96px 32px">Loading question bank…</p>
+    </sc-if>
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1080px;margin:0 auto;padding:48px 32px 64px;width:100%;box-sizing:border-box;animation:fadeUp .24s cubic-bezier(.2,0,.2,1)">
+        <h1 style="font:300 clamp(34px,5vw,55px)/1 var(--font-display);text-transform:uppercase;letter-spacing:0;margin:0 0 12px">Train for the AZ-900.</h1>
+        <p style="font:400 19px/1.3 var(--font-display);letter-spacing:-0.02em;margin:0 0 40px;max-width:56ch">90 original questions across all three exam domains. Ten-question rounds, streak bonuses, and XP that tracks your progress.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--light-grey);border:1px solid var(--light-grey)">
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Level</div>
+            <div style="font:300 40px/1 var(--font-display)">{{ levelNum }}</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Total XP</div>
+            <div style="font:300 40px/1 var(--font-display)">{{ xpTotal }}</div>
+            <div style="font:var(--type-caption);color:var(--mid-grey);margin-top:4px">{{ xpToNext }} to level {{ nextLevel }}</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Best streak</div>
+            <div style="font:300 40px/1 var(--font-display)">×{{ bestStreak }}</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">To review</div>
+            <div style="font:300 40px/1 var(--font-display)">{{ reviewCount }}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin-top:40px">
+          <div style="border:1px solid var(--light-grey);display:flex;flex-direction:column">
+            <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.GradientBar" height="{{ n4 }}" hint-size="100%,4px"></x-import>
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px;flex:1">
+              <h2 style="font:300 24px/1 var(--font-display);text-transform:uppercase;margin:0">Practice round</h2>
+              <p style="margin:0;font:var(--type-body);color:var(--dark-grey)">{{ roundSize }} questions, one per screen. Streaks multiply your XP.</p>
+              <div>
+                <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Domains</div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px">
+                  <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+                    <button onClick="{{ c.pick }}" style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;padding:6px 14px;border-radius:999px;cursor:pointer;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};transition:all .12s">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Feedback</div>
+                <div style="display:flex;border:1px solid var(--mid-grey)">
+                  <sc-for list="{{ fbModes }}" as="f" hint-placeholder-count="2">
+                    <button onClick="{{ f.pick }}" style="flex:1;font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;padding:9px 8px;cursor:pointer;border:none;background:{{ f.bg }};color:{{ f.fg }};transition:all .12s">{{ f.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="margin-top:auto">
+                <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="primary" full-width="{{ true }}" on-click="{{ startPractice }}" hint-size="100%,40px">Start round</x-import>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--light-grey);display:flex;flex-direction:column">
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px;flex:1">
+              <h2 style="font:300 24px/1 var(--font-display);text-transform:uppercase;margin:0">Sprint</h2>
+              <p style="margin:0;font:var(--type-body)">{{ sprintSecs }} seconds per question, no pausing. Correct answers earn a speed bonus.</p>
+              <div style="display:flex;align-items:baseline;gap:8px">
+                <span style="font:300 40px/1 var(--font-display)">{{ sprintSecs }}s</span>
+                <span style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey)">per question</span>
+              </div>
+              <div style="margin-top:auto">
+                <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="secondary" full-width="{{ true }}" on-click="{{ startSprint }}" hint-size="100%,40px">Start sprint</x-import>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--light-grey);display:flex;flex-direction:column">
+            <div style="padding:24px;display:flex;flex-direction:column;gap:16px;flex:1">
+              <h2 style="font:300 24px/1 var(--font-display);text-transform:uppercase;margin:0">Review</h2>
+              <p style="margin:0;font:var(--type-body)">{{ reviewMsg }}</p>
+              <div style="margin-top:auto">
+                <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="secondary" full-width="{{ true }}" disabled="{{ noReview }}" on-click="{{ startReview }}" hint-size="100%,40px">Review missed</x-import>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:48px;margin-top:56px">
+          <div>
+            <h3 style="font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin:0 0 16px">Accuracy by domain</h3>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <sc-for list="{{ domRows }}" as="d" hint-placeholder-count="3">
+                <div>
+                  <div style="display:flex;justify-content:space-between;gap:16px;margin-bottom:6px">
+                    <span style="font:var(--type-body-bold);font-size:14px">{{ d.label }}</span>
+                    <span style="font:var(--type-caption);color:var(--mid-grey)">{{ d.meta }}</span>
+                  </div>
+                  <div style="height:8px;background:var(--light-grey)"><div style="height:8px;background:var(--rich-blue);width:{{ d.pct }}%;transition:width .2s"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div>
+            <h3 style="font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin:0 0 16px">Weak areas</h3>
+            <sc-if value="{{ hasWeak }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <sc-for list="{{ weakRows }}" as="w" hint-placeholder-count="2">
+                  <div style="display:flex;justify-content:space-between;gap:16px;padding:12px 16px;background:var(--light-grey-50);border:1px solid var(--light-grey)">
+                    <span style="font:var(--type-body);font-size:14px">{{ w.label }}</span>
+                    <span style="font:var(--type-body-bold);font-size:14px;color:var(--status-danger)">{{ w.pct }}%</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noWeak }}" hint-placeholder-val="{{ true }}">
+              <p style="margin:0;font:var(--type-body);color:var(--mid-grey)">{{ weakEmptyMsg }}</p>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isRound }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:820px;margin:0 auto;padding:28px 32px 64px;width:100%;box-sizing:border-box">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div style="display:flex;align-items:baseline;gap:12px">
+            <span style="font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase">Question {{ qNumStr }} / {{ qTotal }}</span>
+            <span style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey)">{{ qDomain }}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <sc-if value="{{ showCombo }}" hint-placeholder-val="{{ false }}">
+              <span style="background:var(--aqua);color:var(--dark-grey);font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;padding:4px 10px">Combo ×{{ comboN }}</span>
+            </sc-if>
+            <span style="font:var(--type-body-bold);font-size:13px">+{{ roundXp }} XP</span>
+            <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="ghost" size="s" on-click="{{ exitRound }}" hint-size="60px,32px">Exit</x-import>
+          </div>
+        </div>
+        <div style="display:flex;gap:4px;margin:14px 0 0">
+          <sc-for list="{{ segs }}" as="s" hint-placeholder-count="10">
+            <div style="flex:1;height:6px;background:{{ s.bg }};transition:background .12s"></div>
+          </sc-for>
+        </div>
+        <sc-if value="{{ isSprint }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+            <div style="flex:1;height:4px;background:var(--light-grey)"><div style="height:4px;background:{{ timeColor }};width:{{ timePct }}%"></div></div>
+            <span style="font:var(--type-body-bold);font-size:13px;min-width:36px;text-align:right">{{ timeStr }}</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isMulti }}" hint-placeholder-val="{{ false }}">
+          <span style="display:inline-block;margin-top:28px;background:var(--light-grey);font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;padding:4px 10px">Select {{ needCount }}</span>
+        </sc-if>
+        <h2 style="font:400 clamp(20px,3vw,26px)/1.3 var(--font-display);letter-spacing:-0.02em;margin:20px 0 28px">{{ stem }}</h2>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ opts }}" as="o" hint-placeholder-count="4">
+            <div onClick="{{ o.pick }}" style="display:flex;gap:16px;align-items:flex-start;padding:16px 18px;border:2px solid {{ o.bd }};background:{{ o.bg }};cursor:{{ o.cursor }};transition:border-color .12s,background .12s" style-hover="border-color:{{ o.hoverBd }}">
+              <div style="width:28px;height:28px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:var(--type-caption);border:1px solid {{ o.chipBd }};background:{{ o.chipBg }};color:{{ o.chipFg }};text-transform:uppercase">{{ o.letter }}</div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                  <span style="font:var(--type-body);font-size:15px;line-height:1.4;flex:1;min-width:200px">{{ o.text }}</span>
+                  <sc-if value="{{ o.tag }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:{{ o.tagColor }};white-space:nowrap">{{ o.tag }}</span>
+                  </sc-if>
+                </div>
+                <sc-if value="{{ o.showExp }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:8px 0 0;font:var(--type-body);font-size:13px;line-height:1.45;color:var(--dark-grey);max-width:64ch">{{ o.explanation }}</p>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:24px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:16px">
+            <sc-if value="{{ revealMsg }}" hint-placeholder-val="{{ false }}">
+              <span style="background:{{ revealBg }};color:{{ revealFg }};font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase;padding:6px 12px">{{ revealMsg }}</span>
+            </sc-if>
+            <sc-if value="{{ showLearn }}" hint-placeholder-val="{{ false }}">
+              <a href="{{ learnMore }}" target="_blank" style="font:var(--type-caption)">Learn more</a>
+            </sc-if>
+          </div>
+          <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="primary" disabled="{{ primaryDisabled }}" on-click="{{ primaryAction }}" hint-size="140px,40px">{{ primaryLabel }}</x-import>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isResults }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:900px;margin:0 auto;padding:48px 32px 64px;width:100%;box-sizing:border-box;animation:fadeUp .24s cubic-bezier(.2,0,.2,1)">
+        <sc-if value="{{ leveledUp }}" hint-placeholder-val="{{ false }}">
+          <div style="background:var(--mint);color:var(--dark-grey);padding:20px 24px;margin-bottom:32px">
+            <div style="font:300 28px/1 var(--font-display);text-transform:uppercase">Level {{ levelNum }} reached.</div>
+          </div>
+        </sc-if>
+        <h1 style="font:300 clamp(32px,5vw,48px)/1 var(--font-display);text-transform:uppercase;margin:0 0 32px">{{ resultHeadline }}</h1>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--light-grey);border:1px solid var(--light-grey)">
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Score</div>
+            <div style="font:300 40px/1 var(--font-display)">{{ resPct }}%</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Correct</div>
+            <div style="font:300 40px/1 var(--font-display)">{{ resCorrect }}</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">XP earned</div>
+            <div style="font:300 40px/1 var(--font-display)">+{{ resXp }}</div>
+          </div>
+          <div style="background:var(--white);padding:20px 24px">
+            <div style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin-bottom:8px">Best combo</div>
+            <div style="font:300 40px/1 var(--font-display)">×{{ resCombo }}</div>
+          </div>
+        </div>
+        <h3 style="font:var(--type-caption);letter-spacing:var(--tracking-label);text-transform:uppercase;color:var(--mid-grey);margin:40px 0 16px">Breakdown</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ resRows }}" as="r" hint-placeholder-count="10">
+            <div style="border:1px solid var(--light-grey)">
+              <div onClick="{{ r.toggle }}" style="display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer" style-hover="background:var(--light-grey-50)">
+                <div style="width:24px;height:24px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;background:{{ r.mkBg }}">
+                  <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Icon" name="{{ r.icon }}" size="{{ n14 }}" color="{{ r.mkFg }}" hint-size="14px,14px"></x-import>
+                </div>
+                <span style="font:var(--type-caption);color:var(--mid-grey)">{{ r.numStr }}</span>
+                <span style="flex:1;min-width:0;font:var(--type-body);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.stem }}</span>
+                <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Icon" name="{{ r.chev }}" size="{{ n16 }}" color="var(--mid-grey)" hint-size="16px,16px"></x-import>
+              </div>
+              <sc-if value="{{ r.open }}" hint-placeholder-val="{{ false }}">
+                <div style="padding:4px 16px 16px;display:flex;flex-direction:column;gap:8px">
+                  <p style="margin:0 0 4px;font:var(--type-body);font-size:14px;line-height:1.45">{{ r.fullStem }}</p>
+                  <sc-for list="{{ r.opts }}" as="ro" hint-placeholder-count="4">
+                    <div style="padding:10px 12px;border:1px solid {{ ro.bd }};background:{{ ro.bg }}">
+                      <div style="display:flex;gap:12px;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+                        <span style="font:var(--type-body);font-size:13px;line-height:1.4;flex:1;min-width:200px"><strong style="font:var(--type-body-bold);font-size:13px;text-transform:uppercase">{{ ro.letter }}</strong> — {{ ro.text }}</span>
+                        <sc-if value="{{ ro.tag }}" hint-placeholder-val="{{ false }}">
+                          <span style="font:var(--type-label);letter-spacing:var(--tracking-label);text-transform:uppercase;color:{{ ro.tagColor }};white-space:nowrap">{{ ro.tag }}</span>
+                        </sc-if>
+                      </div>
+                      <p style="margin:6px 0 0;font:var(--type-body);font-size:12.5px;line-height:1.45;color:var(--dark-grey);max-width:70ch">{{ ro.explanation }}</p>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{ r.hasLearn }}" hint-placeholder-val="{{ false }}">
+                    <a href="{{ r.learnMore }}" target="_blank" style="font:var(--type-caption);margin-top:4px">Learn more</a>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:32px;flex-wrap:wrap">
+          <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="primary" on-click="{{ newRound }}" hint-size="140px,40px">New round</x-import>
+          <sc-if value="{{ hasMissed }}" hint-placeholder-val="{{ false }}">
+            <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="secondary" on-click="{{ startReview }}" hint-size="160px,40px">Review missed</x-import>
+          </sc-if>
+          <x-import component-from-global-scope="GNtnerDesignSystem_3f11a0.Button" variant="ghost" on-click="{{ exitRound }}" hint-size="120px,40px">Dashboard</x-import>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+  <footer style="border-top:1px solid var(--light-grey);padding:20px 32px;text-align:center">
+    <p style="margin:0;font:var(--type-caption);color:var(--mid-grey)">Unofficial study aid. Not affiliated with or endorsed by Microsoft. Question bank: AZ-900 skills measured as of July 20, 2026.</p>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;roundSize&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:10,&quot;min&quot;:5,&quot;max&quot;:20,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;},&quot;sprintSeconds&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:20,&quot;min&quot;:10,&quot;max&quot;:40,&quot;step&quot;:5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Round&quot;}}">
+class Component extends DCLogic {
+  state = { view: 'dashboard', loading: true, questions: [], log: [], xp: 0, bestStreak: 0, instant: true, domain: 'all', round: null, openRow: -1 };
+  KEY = 'az900-trainer-redesign/v1';
+  DOMAINS = {
+    'cloud-concepts': 'Cloud concepts',
+    'architecture-services': 'Architecture & services',
+    'management-governance': 'Management & governance'
+  };
+  TOPICS = {
+    'describe-cloud-computing': 'Describe cloud computing',
+    'benefits-of-cloud-services': 'Benefits of cloud services',
+    'cloud-service-types': 'Cloud service types',
+    'core-architectural-components': 'Core architectural components',
+    'compute-networking': 'Compute and networking',
+    'storage': 'Storage services',
+    'identity-access-security': 'Identity, access, and security',
+    'cost-management': 'Cost management',
+    'governance-compliance': 'Governance and compliance',
+    'managing-deploying-resources': 'Managing and deploying resources',
+    'monitoring-tools': 'Monitoring tools'
+  };
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        this.setState({ log: d.log || [], xp: d.xp || 0, bestStreak: d.bestStreak || 0, instant: d.instant !== false, domain: d.domain || 'all' });
+      }
+    } catch (e) {}
+    fetch('questions.json').then((r) => r.json()).then((qs) => this.setState({ questions: qs, loading: false }));
+    this.timer = setInterval(() => this.tick(), 200);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  persist() {
+    const s = this.state;
+    try { localStorage.setItem(this.KEY, JSON.stringify({ log: s.log, xp: s.xp, bestStreak: s.bestStreak, instant: s.instant, domain: s.domain })); } catch (e) {}
+  }
+  roundSize() { return Math.max(3, Math.min(20, this.props.roundSize ?? 10)); }
+  sprintSecs() { return Math.max(5, Math.min(60, this.props.sprintSeconds ?? 20)); }
+  lastByQ() {
+    const m = new Map();
+    for (const a of this.state.log) { const p = m.get(a.q); if (!p || a.t > p.t) m.set(a.q, a); }
+    return m;
+  }
+  reviewIds() {
+    const last = this.lastByQ();
+    const bank = new Set(this.state.questions.map((q) => q.id));
+    const ids = [];
+    for (const [q, a] of last) if (!a.ok && bank.has(q)) ids.push(q);
+    return ids;
+  }
+  shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    return arr;
+  }
+  draw(mode) {
+    const { questions, domain } = this.state;
+    let pool;
+    if (mode === 'review') { const set = new Set(this.reviewIds()); pool = questions.filter((q) => set.has(q.id)); }
+    else pool = domain === 'all' ? questions.slice() : questions.filter((q) => q.domain === domain);
+    const last = this.lastByQ();
+    const fresh = this.shuffle(pool.filter((q) => !last.has(q.id)));
+    const seen = this.shuffle(pool.filter((q) => last.has(q.id))).sort((a, b) => (last.get(a.id).t < last.get(b.id).t ? -1 : 1));
+    return this.shuffle(fresh.concat(seen).slice(0, Math.min(this.roundSize(), pool.length)));
+  }
+  startRound(mode) {
+    if (this.state.loading) return;
+    const qs = this.draw(mode);
+    if (!qs.length) return;
+    this.setState({
+      view: 'round', openRow: -1,
+      round: {
+        mode, qids: qs.map((q) => q.id), idx: 0, selected: [], revealed: false, results: [],
+        streak: 0, best: 0, xpGained: 0, xpStart: this.state.xp, lastGain: 0, lastOk: null, timedOut: false,
+        qDeadline: mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0
+      }
+    });
+  }
+  curQ() { const r = this.state.round; return r ? this.state.questions.find((q) => q.id === r.qids[r.idx]) : null; }
+  complete(q, sel) { return q.kind === 'single' ? sel.length === 1 : new Set(sel).size === q.correct.length && sel.length === q.correct.length; }
+  correct(q, sel) {
+    if (sel.length !== q.correct.length || new Set(sel).size !== q.correct.length) return false;
+    const c = new Set(q.correct); return sel.every((id) => c.has(id));
+  }
+  pick(optId) {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q || r.revealed) return;
+    let sel;
+    if (q.kind === 'single') sel = [optId];
+    else if (r.selected.includes(optId)) sel = r.selected.filter((x) => x !== optId);
+    else if (r.selected.length >= q.correct.length) return;
+    else sel = r.selected.concat(optId);
+    this.setState({ round: { ...r, selected: sel } });
+  }
+  record(r, q, sel, timedOut) {
+    const ok = this.correct(q, sel);
+    const streak = ok ? r.streak + 1 : 0;
+    const gain = ok ? 10 + Math.min(2 * (streak - 1), 10) + (r.mode === 'sprint' ? 5 : 0) : 0;
+    const log = this.state.log.concat({ q: q.id, ok, t: new Date().toISOString() });
+    const xp = this.state.xp + gain;
+    const bestStreak = Math.max(this.state.bestStreak, streak);
+    const round = {
+      ...r, streak, best: Math.max(r.best, streak), xpGained: r.xpGained + gain,
+      lastGain: gain, lastOk: ok, timedOut: !!timedOut,
+      results: r.results.concat({ qid: q.id, selected: sel.slice(), ok })
+    };
+    this.setState({ log, xp, bestStreak, round }, () => this.persist());
+    return round;
+  }
+  advance(round) {
+    const r = round || this.state.round;
+    const next = r.idx + 1;
+    if (next >= r.qids.length) { this.setState({ view: 'results', round: { ...r, revealed: false }, openRow: -1 }); return; }
+    this.setState({
+      round: { ...r, idx: next, selected: [], revealed: false, lastOk: null, timedOut: false, qDeadline: r.mode === 'sprint' ? Date.now() + this.sprintSecs() * 1000 : 0 }
+    });
+  }
+  primary() {
+    const r = this.state.round; const q = this.curQ();
+    if (!r || !q) return;
+    if (r.revealed) { this.advance(); return; }
+    if (!this.complete(q, r.selected)) return;
+    if (this.state.instant || r.mode === 'sprint') {
+      const round = this.record(r, q, r.selected, false);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else {
+      const round = this.record(r, q, r.selected, false);
+      this.advance(round);
+    }
+  }
+  tick() {
+    const r = this.state.round;
+    if (!r || this.state.view !== 'round' || r.mode !== 'sprint' || r.revealed || !r.qDeadline) return;
+    if (Date.now() >= r.qDeadline) {
+      const q = this.curQ();
+      const round = this.record(r, q, r.selected, true);
+      this.setState({ round: { ...round, revealed: true, qDeadline: 0 } });
+    } else this.forceUpdate();
+  }
+  levelOf(xp) {
+    let l = 1, need = 150, rem = xp;
+    while (rem >= need) { rem -= need; l++; need = 150 + 50 * (l - 1); }
+    return { l, into: rem, need };
+  }
+  renderVals() {
+    const s = this.state;
+    const lv = this.levelOf(s.xp);
+    const r = s.round;
+    const q = this.curQ();
+    const revealFeedback = !!(r && r.revealed);
+    const vals = {
+      n4: 4, n14: 14, n16: 16,
+      isLoading: s.loading,
+      isDash: !s.loading && s.view === 'dashboard',
+      isRound: !s.loading && s.view === 'round' && !!q,
+      isResults: !s.loading && s.view === 'results' && !!r,
+      levelNum: lv.l, xpTotal: s.xp, xpLabel: lv.into + ' / ' + lv.need,
+      xpPct: Math.round((lv.into / lv.need) * 100), xpToNext: lv.need - lv.into, nextLevel: lv.l + 1,
+      bestStreak: s.bestStreak, roundSize: this.roundSize(), sprintSecs: this.sprintSecs(),
+      startPractice: () => this.startRound('practice'),
+      startSprint: () => this.startRound('sprint'),
+      startReview: () => this.startRound('review'),
+      exitRound: () => this.setState({ view: 'dashboard', round: null }),
+      newRound: () => this.startRound(r ? r.mode : 'practice')
+    };
+    // dashboard
+    const review = this.reviewIds();
+    vals.reviewCount = review.length;
+    vals.noReview = review.length === 0;
+    vals.reviewMsg = review.length ? review.length + ' missed question' + (review.length === 1 ? '' : 's') + ' waiting. One correct answer clears each.' : 'Nothing to review. Miss a question and it lands here.';
+    vals.chips = [['all', 'All'], ['cloud-concepts', 'Cloud concepts'], ['architecture-services', 'Architecture'], ['management-governance', 'Governance']].map(([id, label]) => ({
+      label, pick: () => this.setState({ domain: id }, () => this.persist()),
+      bg: s.domain === id ? 'var(--rich-blue)' : 'var(--white)',
+      fg: s.domain === id ? 'var(--white)' : 'var(--dark-grey)',
+      bd: s.domain === id ? 'var(--rich-blue)' : 'var(--mid-grey)'
+    }));
+    vals.fbModes = [['Instant', true], ['End of round', false]].map(([label, v]) => ({
+      label, pick: () => this.setState({ instant: v }, () => this.persist()),
+      bg: s.instant === v ? 'var(--dark-grey)' : 'var(--white)',
+      fg: s.instant === v ? 'var(--white)' : 'var(--dark-grey)'
+    }));
+    const last = this.lastByQ();
+    const byId = new Map(s.questions.map((qq) => [qq.id, qq]));
+    const domAgg = {}, topAgg = {};
+    for (const a of s.log) {
+      const qq = byId.get(a.q); if (!qq) continue;
+      (domAgg[qq.domain] = domAgg[qq.domain] || { n: 0, ok: 0 }).n++;
+      if (a.ok) domAgg[qq.domain].ok++;
+      (topAgg[qq.topic] = topAgg[qq.topic] || { n: 0, ok: 0 }).n++;
+      if (a.ok) topAgg[qq.topic].ok++;
+    }
+    vals.domRows = Object.entries(this.DOMAINS).map(([id, label]) => {
+      const g = domAgg[id];
+      return { label, pct: g ? Math.round((g.ok / g.n) * 100) : 0, meta: g ? Math.round((g.ok / g.n) * 100) + '% · ' + g.n + ' answered' : 'No answers yet' };
+    });
+    const weak = Object.entries(topAgg).filter(([, g]) => g.n >= 4 && g.ok / g.n < 0.7);
+    vals.weakRows = weak.map(([id, g]) => ({ label: this.TOPICS[id] || id, pct: Math.round((g.ok / g.n) * 100) }));
+    vals.hasWeak = weak.length > 0;
+    vals.noWeak = weak.length === 0;
+    vals.weakEmptyMsg = s.log.length ? 'No weak areas flagged. A topic is flagged below 70% accuracy after 4 answers.' : 'Answer a few rounds and weak topics show up here.';
+    // round
+    if (r && q) {
+      const n = r.qids.length;
+      vals.qNumStr = String(r.idx + 1).padStart(2, '0');
+      vals.qTotal = n;
+      vals.qDomain = this.DOMAINS[q.domain];
+      vals.showCombo = r.streak >= 2 && !(revealFeedback && !r.lastOk);
+      vals.comboN = r.streak;
+      vals.roundXp = r.xpGained;
+      vals.isSprint = r.mode === 'sprint';
+      vals.isMulti = q.kind === 'multi';
+      vals.needCount = q.correct.length;
+      vals.stem = q.stem;
+      const eor = !s.instant && r.mode !== 'sprint';
+      vals.segs = Array.from({ length: n }, (_, i) => {
+        if (i < r.results.length) { if (eor) return { bg: 'var(--dark-grey)' }; return { bg: r.results[i].ok ? 'var(--mint)' : 'var(--status-danger)' }; }
+        if (i === r.idx) return { bg: 'var(--rich-blue)' };
+        return { bg: 'var(--light-grey)' };
+      });
+      if (r.mode === 'sprint') {
+        const secs = this.sprintSecs();
+        const rem = r.qDeadline ? Math.max(0, (r.qDeadline - Date.now()) / 1000) : 0;
+        vals.timePct = Math.round((rem / secs) * 100);
+        vals.timeColor = rem <= 5 ? 'var(--status-warning)' : 'var(--aqua)';
+        vals.timeStr = r.qDeadline ? '0:' + String(Math.ceil(rem)).padStart(2, '0') : '—';
+      }
+      const cset = new Set(q.correct);
+      vals.opts = q.options.map((op, i) => {
+        const selN = r.selected.includes(op.id);
+        const letter = String.fromCharCode(97 + i);
+        if (!revealFeedback) {
+          return {
+            letter, text: op.text, explanation: op.explanation, pick: () => this.pick(op.id),
+            bd: selN ? 'var(--rich-blue)' : 'var(--light-grey)', bg: 'var(--white)', cursor: 'pointer',
+            hoverBd: 'var(--rich-blue)', chipBd: selN ? 'var(--rich-blue)' : 'var(--mid-grey)',
+            chipBg: selN ? 'var(--rich-blue)' : 'var(--white)', chipFg: selN ? 'var(--white)' : 'var(--dark-grey)',
+            tag: '', tagColor: '', showExp: false
+          };
+        }
+        const isC = cset.has(op.id);
+        const wrongPick = selN && !isC;
+        const bd = isC ? 'var(--mint)' : wrongPick ? 'var(--status-danger)' : 'var(--light-grey)';
+        return {
+          letter, text: op.text, explanation: op.explanation, pick: () => {},
+          bd, bg: isC ? 'var(--mint)' : wrongPick ? 'var(--light-grey-50)' : 'var(--white)',
+          cursor: 'default', hoverBd: bd,
+          chipBd: isC || wrongPick ? 'transparent' : 'var(--mid-grey)',
+          chipBg: isC ? 'var(--dark-grey)' : wrongPick ? 'var(--status-danger)' : 'var(--white)',
+          chipFg: isC || wrongPick ? 'var(--white)' : 'var(--dark-grey)',
+          tag: isC ? (selN ? 'Correct' : 'Correct answer') : wrongPick ? 'Your pick' : '',
+          tagColor: isC ? 'var(--dark-grey)' : 'var(--status-danger)',
+          showExp: true
+        };
+      });
+      vals.revealMsg = revealFeedback ? (r.lastOk ? 'Correct · +' + r.lastGain + ' XP' : r.timedOut ? 'Time up' : 'Incorrect') : '';
+      vals.revealBg = r.lastOk ? 'var(--mint)' : 'var(--status-danger)';
+      vals.revealFg = r.lastOk ? 'var(--dark-grey)' : 'var(--white)';
+      vals.showLearn = revealFeedback && !!q.learnMore;
+      vals.learnMore = q.learnMore || '';
+      const isLast = r.idx === n - 1;
+      vals.primaryLabel = revealFeedback ? (isLast ? 'See results' : 'Next') : eor ? (isLast ? 'Finish' : 'Next') : 'Submit';
+      vals.primaryDisabled = !revealFeedback && !this.complete(q, r.selected);
+      vals.primaryAction = () => this.primary();
+    }
+    // results
+    if (s.view === 'results' && r) {
+      const total = r.results.length;
+      const okN = r.results.filter((x) => x.ok).length;
+      const before = this.levelOf(r.xpStart).l;
+      vals.leveledUp = lv.l > before;
+      vals.resPct = total ? Math.round((okN / total) * 100) : 0;
+      vals.resCorrect = okN + ' / ' + total;
+      vals.resXp = r.xpGained;
+      vals.resCombo = r.best;
+      vals.resultHeadline = okN === total ? 'Perfect round.' : okN / total >= 0.7 ? 'Round complete.' : 'Keep at it.';
+      vals.hasMissed = okN < total;
+      vals.resRows = r.results.map((res, i) => {
+        const qq = byId.get(res.qid);
+        const open = s.openRow === i;
+        const cset = new Set(qq.correct);
+        return {
+          numStr: String(i + 1).padStart(2, '0'), stem: qq.stem, fullStem: qq.stem,
+          mkBg: res.ok ? 'var(--mint)' : 'var(--status-danger)',
+          mkFg: res.ok ? 'var(--dark-grey)' : 'var(--white)',
+          icon: res.ok ? 'check' : 'x',
+          chev: open ? 'chevron-up' : 'chevron-down',
+          open, toggle: () => this.setState({ openRow: open ? -1 : i }),
+          hasLearn: !!qq.learnMore, learnMore: qq.learnMore || '',
+          opts: qq.options.map((op, j) => {
+            const isC = cset.has(op.id);
+            const picked = res.selected.includes(op.id);
+            return {
+              letter: String.fromCharCode(97 + j), text: op.text, explanation: op.explanation,
+              bd: isC ? 'var(--mint)' : picked ? 'var(--status-danger)' : 'var(--light-grey)',
+              bg: isC ? 'var(--mint)' : 'var(--white)',
+              tag: isC ? (picked ? 'Correct' : 'Correct answer') : picked ? 'Your pick' : '',
+              tagColor: isC ? 'var(--dark-grey)' : 'var(--status-danger)'
+            };
+          })
+        };
+      });
+    }
+    return vals;
+  }
+}
+</script>
+</body>
+</html>

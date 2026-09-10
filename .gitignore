@@ -37,3 +37,9 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Claude Design export — keep only the .dc.html mockups and their runtime
+docs/design/_ds/
+docs/design/src/
+docs/design/questions.json
+docs/design/.thumbnail
