@@ -57,10 +57,10 @@ describe('QuestionCard rendering', () => {
     expect(wrapper.find('legend').text()).toBe(single.stem)
   })
 
-  it('shows the topic label and a domain-colored dot', () => {
+  it('shows the topic label and letters the options a, b, c, d', () => {
     const wrapper = mount(QuestionCard, { props: { question: single, modelValue: [] } })
     expect(wrapper.text()).toContain(TOPICS['describe-cloud-computing'].label)
-    expect(wrapper.find('.question-card__domain-dot--cloud').exists()).toBe(true)
+    expect(wrapper.findAll('.option__letter').map((el) => el.text())).toEqual(['a', 'b', 'c', 'd'])
   })
 
   it('shows the mono question id only when showQuestionId is set', () => {
@@ -75,10 +75,10 @@ describe('QuestionCard rendering', () => {
 
   it('shows a pick-count badge for multi questions, none for single', () => {
     const multiWrapper = mount(QuestionCard, { props: { question: multi, modelValue: [] } })
-    expect(multiWrapper.text()).toContain('Pick 2')
+    expect(multiWrapper.text()).toContain('Select 2')
 
     const singleWrapper = mount(QuestionCard, { props: { question: single, modelValue: [] } })
-    expect(singleWrapper.text()).not.toContain('Pick')
+    expect(singleWrapper.text()).not.toContain('Select')
   })
 
   it('gives all radios for a question the same shared name', () => {
@@ -212,5 +212,28 @@ describe('QuestionCard graded state', () => {
   it('does not render the Learn More link when not graded, even if present', () => {
     const wrapper = mount(QuestionCard, { props: { question: single, modelValue: [] } })
     expect(wrapper.find('a.learn-more').exists()).toBe(false)
+  })
+
+  it('tags the correct option, the correct-but-unpicked option, and the wrong pick', () => {
+    const wrong = mount(QuestionCard, { props: { question: single, modelValue: ['a'], graded: true } })
+    const tags = wrong.findAll('.option').map((row) => row.find('.option__tag').exists() ? row.find('.option__tag').text() : '')
+    expect(tags).toEqual(['Your pick', 'Correct answer', '', ''])
+
+    const right = mount(QuestionCard, { props: { question: single, modelValue: ['b'], graded: true } })
+    expect(right.findAll('.option')[1]!.find('.option__tag').text()).toBe('Correct')
+  })
+
+  it('marks the picked option before grading', () => {
+    const wrapper = mount(QuestionCard, { props: { question: single, modelValue: ['c'] } })
+    expect(wrapper.findAll('.option')[2]!.classes()).toContain('option--picked')
+    expect(wrapper.find('.option__tag').exists()).toBe(false)
+  })
+
+  it('hides the verdict line when showVerdict is false and renames the empty verdict', () => {
+    const hidden = mount(QuestionCard, { props: { question: single, modelValue: ['b'], graded: true, showVerdict: false } })
+    expect(hidden.find('.question-card__verdict').exists()).toBe(false)
+
+    const noPick = mount(QuestionCard, { props: { question: single, modelValue: [], graded: true, emptyVerdictLabel: 'No pick' } })
+    expect(noPick.find('.question-card__verdict').text()).toBe('No pick')
   })
 })
