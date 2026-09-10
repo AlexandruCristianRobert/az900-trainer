@@ -6,16 +6,19 @@
 export const DOMAINS = {
   'cloud-concepts': {
     label: 'Describe cloud concepts',
+    shortLabel: 'Cloud concepts',
     weight: '25–30%',
     examQuestions: 12,
   },
   'architecture-services': {
     label: 'Describe Azure architecture and services',
+    shortLabel: 'Architecture & services',
     weight: '35–40%',
     examQuestions: 15,
   },
   'management-governance': {
     label: 'Describe Azure management and governance',
+    shortLabel: 'Management & governance',
     weight: '30–35%',
     examQuestions: 13,
   },
