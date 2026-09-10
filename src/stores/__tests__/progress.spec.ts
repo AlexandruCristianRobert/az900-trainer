@@ -269,4 +269,68 @@ describe('progress store', () => {
 
     expect(secondEndedAt).toBe(firstEndedAt)
   })
+
+  it('(g) loads default preferences and persists updates through the repository', async () => {
+    const store = useProgressStore()
+    await store.init()
+    expect(store.preferences).toEqual({ feedbackTiming: 'instant', domain: 'all' })
+
+    await store.updatePreferences({ domain: 'cloud-concepts' })
+    expect(store.preferences).toEqual({ feedbackTiming: 'instant', domain: 'cloud-concepts' })
+    expect(await repository.getPreferences()).toEqual({ feedbackTiming: 'instant', domain: 'cloud-concepts' })
+
+    // Reset never touches preferences.
+    await store.resetProgress()
+    expect(store.preferences.domain).toBe('cloud-concepts')
+  })
+
+  it('(h) derives total XP, Level and best Streak from the Answer log', async () => {
+    const round = makeSession({ mode: 'practice', status: 'completed', endedAt: '2026-08-01T00:05:00.000Z' })
+    await repository.saveSession(round)
+    const q = questionBank[0]!
+    const mk = (correct: boolean, xp: number): Answer => ({
+      id: crypto.randomUUID(), sessionId: round.id, questionId: q.id,
+      selected: q.correct, correct, submittedAt: '2026-08-01T00:01:00.000Z', xp,
+    })
+    await repository.saveAnswers([mk(true, 10), mk(true, 12), mk(false, 0), mk(true, 10)])
+
+    const store = useProgressStore()
+    await store.init()
+    expect(store.totalXp).toBe(32)
+    expect(store.level).toEqual({ level: 1, into: 32, need: 150 })
+    expect(store.bestStreak).toBe(2)
+  })
+
+  it('(i) keeps the cache and flags saveFailed when the repository write rejects', async () => {
+    const store = useProgressStore()
+    await store.init()
+    const spy = vi.spyOn(repository, 'saveAnswers').mockRejectedValueOnce(new Error('quota'))
+
+    const q = questionBank[0]!
+    const answer: Answer = {
+      id: crypto.randomUUID(), sessionId: crypto.randomUUID(), questionId: q.id,
+      selected: q.correct, correct: true, submittedAt: '2026-08-01T00:00:00.000Z', xp: 10,
+    }
+    await expect(store.recordAnswers([answer])).resolves.toBeUndefined()
+    expect(store.answers).toContainEqual(answer)
+    expect(store.saveFailed).toBe(true)
+
+    store.dismissSaveFailure()
+    expect(store.saveFailed).toBe(false)
+    spy.mockRestore()
+  })
+
+  it('(j) recordAnswers updates the cache before the repository write settles', async () => {
+    const store = useProgressStore()
+    await store.init()
+    const q = questionBank[0]!
+    const answer: Answer = {
+      id: crypto.randomUUID(), sessionId: crypto.randomUUID(), questionId: q.id,
+      selected: q.correct, correct: true, submittedAt: '2026-08-01T00:00:00.000Z', xp: 10,
+    }
+    const pending = store.recordAnswers([answer])
+    expect(store.answers).toContainEqual(answer) // synchronous, optimistic
+    await pending
+    expect(await repository.getAnswers()).toContainEqual(answer)
+  })
 })

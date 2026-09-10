@@ -11,7 +11,9 @@ import {
   type ExamHistoryEntry,
   type TopicStats,
 } from '@/domain/analytics'
+import { DEFAULT_PREFERENCES, type Preferences } from '@/domain/preferences'
 import { finalizeExamAnswers } from '@/domain/scoring'
+import { bestStreak as bestStreakOf, levelOf, totalXp as totalXpOf, type LevelProgress } from '@/domain/xp'
 import { repository } from '@/repository'
 
 interface ExportedProgress {
@@ -31,6 +33,13 @@ export const useProgressStore = defineStore('progress', () => {
   const questions = ref<Question[]>([])
   const sessions = ref<Session[]>([])
   const answers = ref<Answer[]>([])
+  const preferences = ref<Preferences>({ ...DEFAULT_PREFERENCES })
+  /** Set when a repository write rejected; the UI shows a "couldn't save" notice. */
+  const saveFailed = ref(false)
+
+  const totalXp = computed<number>(() => totalXpOf(answers.value))
+  const level = computed<LevelProgress>(() => levelOf(totalXp.value))
+  const bestStreak = computed<number>(() => bestStreakOf(sessions.value, answers.value))
 
   const questionById = computed<Map<string, Question>>(
     () => new Map(questions.value.map((q) => [q.id, q])),
@@ -70,6 +79,7 @@ export const useProgressStore = defineStore('progress', () => {
     questions.value = await repository.getQuestions()
     sessions.value = await repository.getSessions()
     answers.value = await repository.getAnswers()
+    preferences.value = await repository.getPreferences()
   }
 
   async function init(): Promise<void> {
@@ -79,16 +89,42 @@ export const useProgressStore = defineStore('progress', () => {
     ready.value = true
   }
 
+  /**
+   * Optimistic: the cache changes first so the screen updates immediately; the
+   * repository write follows. A rejected write flags `saveFailed` instead of
+   * throwing — a learner must never be stranded on a graded Question.
+   */
   async function saveSession(session: Session): Promise<void> {
-    await repository.saveSession(session)
     const index = sessions.value.findIndex((s) => s.id === session.id)
     if (index === -1) sessions.value.push(session)
     else sessions.value[index] = session
+    try {
+      await repository.saveSession(session)
+    } catch {
+      saveFailed.value = true
+    }
   }
 
   async function recordAnswers(newAnswers: Answer[]): Promise<void> {
-    await repository.saveAnswers(newAnswers)
     answers.value.push(...newAnswers)
+    try {
+      await repository.saveAnswers(newAnswers)
+    } catch {
+      saveFailed.value = true
+    }
+  }
+
+  function dismissSaveFailure(): void {
+    saveFailed.value = false
+  }
+
+  async function updatePreferences(patch: Partial<Preferences>): Promise<void> {
+    preferences.value = { ...preferences.value, ...patch }
+    try {
+      await repository.savePreferences(preferences.value)
+    } catch {
+      saveFailed.value = true
+    }
   }
 
   function exportProgress(): string {
@@ -124,6 +160,11 @@ export const useProgressStore = defineStore('progress', () => {
     questions,
     sessions,
     answers,
+    preferences,
+    saveFailed,
+    totalXp,
+    level,
+    bestStreak,
     questionById,
     inProgressExam,
     topics,
@@ -134,6 +175,8 @@ export const useProgressStore = defineStore('progress', () => {
     init,
     saveSession,
     recordAnswers,
+    updatePreferences,
+    dismissSaveFailure,
     exportProgress,
     importProgress,
     resetProgress,
