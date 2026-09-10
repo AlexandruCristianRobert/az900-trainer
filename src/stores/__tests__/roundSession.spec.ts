@@ -159,7 +159,24 @@ describe('round store', () => {
     expect(progress.sessions).toHaveLength(1)
   })
 
-  it('(g) togglePick replaces for single and toggles up to the pick count for multi', () => {
+  it('(g) starting a new Round completes the Session the Round it replaces left open', async () => {
+    const progress = useProgressStore()
+    const round = useRoundStore()
+    round.startRound('practice', MONITORING)
+    round.setPicked([...round.currentQuestion!.correct])
+    await round.submit()
+
+    expect(round.startRound('practice', MONITORING)).toBe(true)
+    await new Promise((resolve) => setTimeout(resolve, 0)) // let the detached finish land
+    expect(progress.sessions).toHaveLength(1)
+    expect(progress.sessions[0]!.status).toBe('completed')
+    expect(progress.sessions[0]!.endedAt).not.toBeNull()
+    expect(round.round).not.toBeNull()
+    expect(round.round!.index).toBe(0)
+    expect(round.round!.results).toHaveLength(0)
+  })
+
+  it('(h) togglePick replaces for single and toggles up to the pick count for multi', () => {
     const round = useRoundStore()
     round.startRound('practice', { kind: 'all' })
     const single = questionBank.find((q) => q.kind === 'single')!

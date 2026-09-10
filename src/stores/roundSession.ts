@@ -66,6 +66,10 @@ export const useRoundStore = defineStore('roundSession', () => {
   }
 
   function startRound(mode: RoundMode, pool: PoolSpec): boolean {
+    // Leaving mid-Round completes the Session with whatever Answers exist. finish()
+    // detaches the old Round and nulls `round` synchronously, before the assignment
+    // below, so its completion still lands on the Round this one replaces.
+    void finish()
     const questionIds = drawRound(resolvePool(progress.questions, progress.answers, pool), progress.answers)
     if (questionIds.length === 0) {
       round.value = null
