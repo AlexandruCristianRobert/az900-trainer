@@ -75,7 +75,7 @@ describe('ResultsView', () => {
 
     // No incorrect Answers were ever recorded, so no review link is offered.
     const linkLabels = wrapper.findAll('a').map((a) => a.text())
-    expect(linkLabels).not.toContain('Review missed questions')
+    expect(linkLabels).not.toContain('Start review')
   })
 
   it('renders a completed exam with a correct/incorrect/unanswered/dangling mix', async () => {
@@ -186,7 +186,7 @@ describe('ResultsView', () => {
 
     // At least one incorrect Answer was recorded, so the review link is offered.
     const linkLabels = wrapper.findAll('a').map((a) => a.text())
-    expect(linkLabels).toContain('Review missed questions')
+    expect(linkLabels).toContain('Start review')
   })
 
   it('does not treat an in-progress exam session as a valid results page', async () => {
@@ -198,5 +198,58 @@ describe('ResultsView', () => {
     const { wrapper } = await mountRoute(pinia, `/results/${sessionId}`)
 
     expect(wrapper.text()).toContain("This results page doesn't exist.")
+  })
+
+  it('renders a Round results page from the Session and its Answers, with a No pick tag for a Sprint timeout', async () => {
+    const pinia = await setupProgress()
+    const progress = useProgressStore()
+    const now = '2026-09-10T10:00:00.000Z'
+    const before: Session = { id: 'old', mode: 'practice', status: 'completed', startedAt: now, endedAt: now, exam: null }
+    const sprint: Session = { id: 'sp', mode: 'sprint', status: 'completed', startedAt: now, endedAt: now, exam: null }
+    await progress.saveSession(before)
+    await progress.saveSession(sprint)
+    const mk = (sessionId: string, questionId: string, selected: string[], correct: boolean, xp: number): Answer =>
+      ({ id: crypto.randomUUID(), sessionId, questionId, selected, correct, submittedAt: now, xp })
+    await progress.recordAnswers([
+      ...Array.from({ length: 14 }, () => mk('old', 'cc-001', ['b'], true, 10)), // 140 XP before
+      mk('sp', 'cc-001', ['b'], true, 15),
+      mk('sp', 'arch-001', [], false, 0),
+      mk('sp', 'gov-001', ['a'], false, 0),
+    ])
+
+    const { wrapper } = await mountRoute(pinia, '/results/sp')
+    expect(wrapper.text()).toContain('33%')
+    expect(wrapper.text()).toContain('Keep at it')
+    expect(wrapper.text()).toContain('1/3')
+    expect(wrapper.text()).toContain('+15')
+    expect(wrapper.text()).toContain('×1')
+    expect(wrapper.find('[role="status"]').text()).toBe('Level 2 reached!')
+
+    const chips = wrapper.findAll('.question-row .chip').map((c) => c.text())
+    expect(chips).toEqual(['Correct', 'No pick', 'Incorrect'])
+
+    const noPickRow = wrapper.findAll('.question-row')[1]!
+    await noPickRow.find('.question-row__summary').trigger('click')
+    expect(noPickRow.find('.question-card__verdict').text()).toBe('No pick')
+
+    const links = wrapper.findAll('a').map((a) => [a.text(), a.attributes('href')])
+    expect(links).toContainEqual(['New round', '/sprint'])
+    expect(links).toContainEqual(['Start review', '/review'])
+    expect(links).toContainEqual(['Dashboard', '/'])
+  })
+
+  it('shows no level-up banner and no review link after a perfect Round', async () => {
+    const pinia = await setupProgress()
+    const progress = useProgressStore()
+    const now = '2026-09-10T10:00:00.000Z'
+    await progress.saveSession({ id: 'p', mode: 'practice', status: 'completed', startedAt: now, endedAt: now, exam: null })
+    await progress.recordAnswers([
+      { id: crypto.randomUUID(), sessionId: 'p', questionId: 'cc-001', selected: ['b'], correct: true, submittedAt: now, xp: 10 },
+    ])
+    const { wrapper } = await mountRoute(pinia, '/results/p')
+    expect(wrapper.text()).toContain('100%')
+    expect(wrapper.text()).toContain('Perfect round!')
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+    expect(wrapper.findAll('a').map((a) => a.text())).not.toContain('Start review')
   })
 })
