@@ -1,6 +1,7 @@
 import type { Question } from '@/data/types'
 import type { Answer, Session } from './entities'
 import { EXAM_QUESTION_COUNT } from './examBlueprint'
+import { xpForAnswer } from './xp'
 
 /** All-or-nothing: the selected set must equal the correct set. */
 export function isCorrect(question: Question, selected: string[]): boolean {
@@ -41,13 +42,15 @@ export function finalizeExamAnswers(
     const question = questionById.get(questionId)
     const selected = session.exam.selections[questionId] ?? []
     if (!question || !isCompleteSelection(question, selected)) continue
+    const correct = isCorrect(question, selected)
     answers.push({
       id: crypto.randomUUID(),
       sessionId: session.id,
       questionId,
       selected,
-      correct: isCorrect(question, selected),
+      correct,
       submittedAt,
+      xp: xpForAnswer('exam', correct, 1),
     })
   }
   return answers

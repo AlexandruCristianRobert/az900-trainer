@@ -1,4 +1,6 @@
-export type SessionMode = 'exam' | 'practice' | 'review'
+export type SessionMode = 'exam' | 'practice' | 'sprint' | 'review'
+/** A Round is any non-exam Session (CONTEXT.md). */
+export type RoundMode = Exclude<SessionMode, 'exam'>
 export type SessionStatus = 'in-progress' | 'completed' | 'expired'
 
 export interface ExamState {
@@ -13,14 +15,21 @@ export interface Session {
   status: SessionStatus
   startedAt: string
   endedAt: string | null
-  exam: ExamState | null                // null for practice/review
+  exam: ExamState | null                // null for every Round
 }
 
 export interface Answer {
   id: string
   sessionId: string
   questionId: string
-  selected: string[]                    // always non-empty; unanswered exam questions produce NO Answer
+  /**
+   * Non-empty everywhere except a Sprint timeout, which records an incorrect
+   * Answer with whatever was picked — possibly nothing (ADR-0004). Unanswered
+   * exam questions still produce NO Answer.
+   */
+  selected: string[]
   correct: boolean
   submittedAt: string
+  /** XP earned by this Answer, fixed at submission (ADR-0005). Absent on legacy Answers = 0. */
+  xp?: number
 }

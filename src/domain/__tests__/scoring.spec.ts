@@ -77,3 +77,18 @@ describe('finalizeExamAnswers', () => {
     expect(finalizeExamAnswers(session, partialBank, 'x')).toHaveLength(0)
   })
 })
+
+describe('finalizeExamAnswers XP', () => {
+  it('stamps a flat 10 XP on correct Answers and 0 on incorrect ones', () => {
+    const session: Session = {
+      id: 's', mode: 'exam', status: 'completed',
+      startedAt: '2026-09-01T00:00:00.000Z', endedAt: '2026-09-01T00:45:00.000Z',
+      exam: { deadline: '2026-09-01T00:45:00.000Z', questionIds: ['cc-001', 'cc-002'], selections: { 'cc-001': ['b'], 'cc-002': ['a', 'b'] } },
+    }
+    const answers = finalizeExamAnswers(session, new Map([[single.id, single], [multi.id, multi]]), session.endedAt!)
+    expect(answers.map((a) => [a.questionId, a.correct, a.xp])).toEqual([
+      ['cc-001', true, 10],
+      ['cc-002', false, 0],
+    ])
+  })
+})
