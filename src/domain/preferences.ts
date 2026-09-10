@@ -17,7 +17,8 @@ function isFeedbackTiming(value: unknown): value is FeedbackTiming {
 }
 
 function isDomainChoice(value: unknown): value is DomainChoice {
-  return value === 'all' || (typeof value === 'string' && value in DOMAINS)
+  // hasOwn, not `in`: `in` would accept Object.prototype keys ('toString', '__proto__') as Domain ids.
+  return value === 'all' || (typeof value === 'string' && Object.hasOwn(DOMAINS, value))
 }
 
 export function sanitizePreferences(value: unknown): Preferences {
