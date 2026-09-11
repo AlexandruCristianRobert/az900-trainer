@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, RouterLink, useRouter } from 'vue-router'
 import ExamTimer from '@/components/ExamTimer.vue'
+import HistorySparkline from '@/components/HistorySparkline.vue'
 import QuestionCard from '@/components/QuestionCard.vue'
 import QuestionGrid from '@/components/QuestionGrid.vue'
 import { EXAM_DURATION_MS, EXAM_QUESTION_COUNT, PASS_LINE } from '@/domain/examBlueprint'
 import { useExamStore } from '@/stores/examSession'
+import { useProgressStore } from '@/stores/progress'
 
 const CONFIRM_WINDOW_MS = 5000
 /**
@@ -19,6 +21,7 @@ const EXAM_SUMMARY = `${EXAM_QUESTION_COUNT} questions · ${EXAM_DURATION_MS / 6
 
 const router = useRouter()
 const examStore = useExamStore()
+const progress = useProgressStore()
 
 const starting = ref(false)
 const ending = ref(false)
@@ -29,6 +32,15 @@ let confirmTimeoutId: ReturnType<typeof setTimeout> | undefined
 /** Non-null exactly while an exam is in progress — the exam room is its own state. */
 const activeExam = computed(() => examStore.session?.exam ?? null)
 const total = computed(() => examStore.examQuestions.length)
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleString()
+}
+
+/** `history` is newest first; the sparkline reads oldest → newest. */
+const sparklinePoints = computed(() =>
+  [...progress.history].reverse().map((entry) => ({ score: entry.score, label: formatDate(entry.endedAt) })),
+)
 
 function isAnswered(index: number): boolean {
   const question = examStore.examQuestions[index]
@@ -113,7 +125,7 @@ onBeforeUnmount(disarmConfirm)
     <p class="ending-note">Scoring your exam…</p>
   </main>
 
-  <main v-else-if="!activeExam" class="page">
+  <main v-else-if="!activeExam" class="page page--narrow fade-up">
     <div class="card setup">
       <h1 class="setup__heading">Exam simulation</h1>
       <p class="setup__summary mono">{{ EXAM_SUMMARY }}</p>
@@ -122,6 +134,32 @@ onBeforeUnmount(disarmConfirm)
         Start exam
       </button>
     </div>
+
+    <section v-if="progress.history.length > 0" class="card history-panel">
+      <h2 class="eyebrow history-panel__title">Score history</h2>
+      <HistorySparkline
+        :points="sparklinePoints"
+        :threshold="PASS_LINE"
+        :threshold-label="String(PASS_LINE)"
+      />
+      <ul class="history">
+        <li v-for="entry in progress.history" :key="entry.sessionId">
+          <RouterLink class="history__row" :to="`/results/${entry.sessionId}`">
+            <span class="history__date">{{ formatDate(entry.endedAt) }}</span>
+            <span v-if="entry.status === 'expired'" class="chip chip--warn">Not finished</span>
+            <span
+              class="history__score mono"
+              :class="entry.passed ? 'history__score--pass' : 'history__score--fail'"
+            >
+              {{ entry.score }}
+            </span>
+          </RouterLink>
+        </li>
+      </ul>
+      <p class="history-panel__caption">
+        Estimated score — Microsoft uses an unpublished scaled model.
+      </p>
+    </section>
   </main>
 
   <div v-else class="exam-room">
@@ -185,23 +223,74 @@ onBeforeUnmount(disarmConfirm)
 }
 
 .setup {
-  max-width: 34rem;
-  padding: 2rem;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .setup__heading {
-  margin-bottom: 0.75rem;
+  margin: 0;
 }
 
 .setup__summary {
-  margin: 0 0 0.5rem;
-  color: var(--accent);
-  font-weight: 600;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
 }
 
 .setup__note {
-  margin: 0 0 1.5rem;
+  margin: 0 0 8px;
   color: var(--ink-muted);
+}
+
+.history-panel {
+  margin-top: 24px;
+  padding: 24px;
+}
+
+.history-panel__title {
+  margin: 0 0 16px;
+}
+
+.history-panel__caption {
+  margin: 12px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+
+.history {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.history__date {
+  flex: 1;
+  font-size: 13px;
+}
+
+.history__score {
+  font-weight: 700;
+}
+
+.history__score--pass {
+  color: var(--pass);
+}
+
+.history__score--fail {
+  color: var(--fail);
 }
 
 .exam-bar {
@@ -209,10 +298,10 @@ onBeforeUnmount(disarmConfirm)
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 0.75rem 1.5rem;
+  gap: 16px;
+  padding: 12px 24px;
+  background: var(--bg-header);
   border-bottom: 1px solid var(--line);
-  background: var(--surface);
 }
 
 .exam-bar__position {
@@ -223,7 +312,7 @@ onBeforeUnmount(disarmConfirm)
 
 .exam-bar__actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 .btn-ghost--danger {
@@ -232,23 +321,23 @@ onBeforeUnmount(disarmConfirm)
 
 .btn-ghost--danger:hover {
   border-color: var(--fail);
-  background: color-mix(in srgb, var(--fail) 12%, var(--surface));
+  background: var(--fail-soft);
 }
 
 .exam-question {
-  padding: 1.5rem;
+  padding: 24px;
 }
 
 .exam-question__nav {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1.5rem;
+  gap: 16px;
+  margin-top: 24px;
 }
 
 .exam-progress {
-  margin: 1.5rem 0 0.75rem;
+  margin: 24px 0 12px;
   color: var(--ink-muted);
-  font-size: 0.9rem;
+  font-size: 13px;
 }
 </style>

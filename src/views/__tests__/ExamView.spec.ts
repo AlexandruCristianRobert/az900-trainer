@@ -225,4 +225,29 @@ describe('ExamView', () => {
     expect(stored.status).toBe('expired')
     expect(stored.endedAt).toBe(deadline)
   })
+
+  it('lists the score history on the setup screen, newest first, against the 700 line', async () => {
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const progress = useProgressStore()
+    await progress.init()
+    const older = '2026-08-20T10:00:00.000Z'
+    const newer = '2026-08-21T10:00:00.000Z'
+    await progress.saveSession({ id: 'old', mode: 'exam', status: 'expired', startedAt: older, endedAt: older, exam: { deadline: older, questionIds: ['cc-001'], selections: {} } })
+    await progress.saveSession({ id: 'new', mode: 'exam', status: 'completed', startedAt: newer, endedAt: newer, exam: { deadline: newer, questionIds: ['cc-001'], selections: { 'cc-001': ['b'] } } })
+    await progress.recordAnswers([{ id: crypto.randomUUID(), sessionId: 'new', questionId: 'cc-001', selected: ['b'], correct: true, submittedAt: newer, xp: 10 }])
+
+    const router = createRouter({ history: createMemoryHistory(), routes })
+    await router.push('/exam')
+    await router.isReady()
+    const wrapper = mount(RouterHost, { global: { plugins: [pinia, router] } })
+    await nextTick()
+
+    expect(wrapper.find('.sparkline__svg').attributes('aria-label')).toContain('2 exams')
+    const rows = wrapper.findAll('.history__row')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]!.attributes('href')).toBe('/results/new')
+    expect(rows[1]!.find('.chip--warn').text()).toBe('Not finished')
+    expect(wrapper.text()).toContain('Estimated score — Microsoft uses an unpublished scaled model.')
+  })
 })
