@@ -32,7 +32,7 @@ describe('resolvePool', () => {
   it('returns the whole bank for "all"', () => {
     expect(resolvePool(bank, [], { kind: 'all' })).toHaveLength(22)
   })
-  it('filters by Domain and by Topic', () => {
+  it('narrows to one Domain and one Topic', () => {
     expect(resolvePool(bank, [], { kind: 'domain', domain: 'architecture-services' }).map((x) => x.id)).toEqual(
       ['arch-0', 'arch-1', 'arch-2', 'arch-3', 'arch-4', 'arch-5'],
     )
@@ -54,12 +54,20 @@ describe('drawRound', () => {
     const pool = resolvePool(bank, [], { kind: 'topic', topic: 'cost-management' })
     expect(drawRound(pool, []).sort()).toEqual(['gov-0', 'gov-1', 'gov-2', 'gov-3'])
   })
+  it('is deterministic for a pinned rng', () => {
+    const pool = resolvePool(bank, [], { kind: 'topic', topic: 'cost-management' }) // gov-0..gov-3
+    // rng pinned to 0 makes every Fisher-Yates swap target index 0, which turns a
+    // pass into a left rotation by one: [a,b,c,d] -> [b,c,d,a]. drawRound shuffles
+    // twice with nothing answered (the fresh Questions, then the picked ids), so the
+    // pool order rotates twice.
+    expect(drawRound(pool, [], () => 0)).toEqual(['gov-2', 'gov-3', 'gov-0', 'gov-1'])
+  })
   it('prefers never-answered Questions, then least-recently-answered', () => {
     const pool = resolvePool(bank, [], { kind: 'domain', domain: 'cloud-concepts' }) // 12
     const answers = [
       answered('cc-0', '2026-09-03T00:00:00Z'), // most recent -> excluded
       answered('cc-1', '2026-09-02T00:00:00Z'), // second most recent -> excluded
-      answered('cc-2', '2026-09-01T00:00:00Z'), // oldest answered -> included (10 fresh + ... no: 9 fresh)
+      answered('cc-2', '2026-09-01T00:00:00Z'), // 8 never-answered + the 2 least-recently-answered
       answered('cc-3', '2026-08-30T00:00:00Z'),
     ]
     // 8 never-answered (cc-4..cc-11) always in; then the 2 least recent of the answered: cc-3, cc-2.

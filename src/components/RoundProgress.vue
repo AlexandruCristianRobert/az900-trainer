@@ -53,7 +53,7 @@ const segments = computed(() =>
   background: var(--fail);
 }
 .seg--done {
-  background: #4a4a66;
+  background: var(--seg-done);
 }
 .seg--current {
   background: var(--accent);

@@ -76,6 +76,11 @@ describe('totalXp', () => {
     expect(totalXp([])).toBe(0)
     expect(totalXp([answer('s', true, 10), answer('s', true), answer('s', false, 0), answer('s', true, 14)])).toBe(24)
   })
+
+  it('treats a non-numeric xp from an imported file as zero', () => {
+    const junk = answer('s', true, 'abc' as unknown as number)
+    expect(totalXp([answer('s', true, 10), junk])).toBe(10)
+  })
 })
 
 describe('longestStreak', () => {

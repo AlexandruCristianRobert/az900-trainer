@@ -19,6 +19,9 @@ const roundStore = useRoundStore()
 
 const HEADING: Record<RoundMode, string> = { practice: 'Practice round', sprint: 'Sprint', review: 'Review' }
 
+/** Submit and Next occupy the same pixels, so a double-click submits and advances (DataControls' grace, same rationale). */
+const PRIMARY_GRACE_MS = 350
+
 /** `?topic=` beats `?domain=` beats the remembered Domain chip; Review always uses the deck. */
 function poolFromRoute(): PoolSpec {
   if (props.mode === 'review') return { kind: 'review' }
@@ -33,6 +36,7 @@ function poolFromRoute(): PoolSpec {
 
 const started = roundStore.startRound(props.mode, poolFromRoute())
 const finishing = ref(false)
+let lastPrimaryMs = 0
 
 const round = computed(() => roundStore.round)
 const position = computed(() => String((round.value?.index ?? 0) + 1).padStart(2, '0'))
@@ -57,7 +61,7 @@ const showStreak = computed(() => {
 })
 
 const emptyMessage =
-  props.mode === 'review' ? 'Nothing to review yet. A wrong Answer lands here.' : 'No Questions in this Pool yet.'
+  props.mode === 'review' ? 'Nothing to review yet. A wrong answer lands here.' : 'No questions here yet.'
 
 async function leaveToResults(sessionId: string | null): Promise<void> {
   finishing.value = true
@@ -66,13 +70,16 @@ async function leaveToResults(sessionId: string | null): Promise<void> {
 }
 
 async function primary(): Promise<void> {
-  if (finishing.value || !round.value) return
+  const now = Date.now()
+  if (finishing.value || !round.value || now - lastPrimaryMs < PRIMARY_GRACE_MS) return
+  lastPrimaryMs = now
   const sessionId = roundStore.showReveal ? await roundStore.advance() : await roundStore.submit()
   if (!roundStore.round) await leaveToResults(sessionId)
 }
 
 /** 1–5 pick an option, Enter is the primary action — unless a button or link has focus. */
 function onKeydown(event: KeyboardEvent): void {
+  if (event.repeat) return
   if (!round.value) return
   if (event.key === 'Enter') {
     const target = event.target as HTMLElement | null
@@ -81,6 +88,8 @@ function onKeydown(event: KeyboardEvent): void {
     void primary()
     return
   }
+  // A modifier means a browser or OS shortcut (Ctrl+1 switches tab), not a pick.
+  if (event.ctrlKey || event.metaKey || event.altKey) return
   const n = Number(event.key)
   if (n >= 1 && n <= 5) {
     const option = roundStore.currentQuestion?.options[n - 1]
@@ -153,11 +162,13 @@ onBeforeRouteLeave(() => {
         v-if="revealMessage"
         class="reveal-pill mono"
         :class="round.lastCorrect ? 'reveal-pill--pass' : 'reveal-pill--fail'"
-        role="status"
       >
         {{ revealMessage }}
       </span>
       <span v-else></span>
+      <!-- Mounted for the whole Round: a live region inserted together with its
+           text is not announced reliably. It is the pill that comes and goes. -->
+      <span class="visually-hidden" role="status">{{ revealMessage }}</span>
       <button class="btn btn-primary" type="button" :disabled="primaryDisabled" @click="primary">
         {{ primaryLabel }}
       </button>
@@ -206,7 +217,7 @@ onBeforeRouteLeave(() => {
   padding: 5px 10px;
   border: 1px solid var(--accent);
   border-radius: 999px;
-  background: rgb(139 92 246 / 0.18);
+  background: var(--accent-strong);
   color: var(--accent-text);
   font-size: 11px;
   font-weight: 700;
@@ -241,11 +252,11 @@ onBeforeRouteLeave(() => {
 }
 .reveal-pill--pass {
   color: var(--pass);
-  background: rgb(52 211 153 / 0.14);
+  background: var(--pass-soft-strong);
 }
 .reveal-pill--fail {
   color: var(--fail);
-  background: rgb(248 113 113 / 0.12);
+  background: var(--fail-soft-strong);
 }
 .ending-note {
   text-align: center;

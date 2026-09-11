@@ -277,7 +277,7 @@ function onCheckboxChange(optionId: string, event: Event): void {
 .option--picked .option__letter {
   border-color: var(--accent);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 .option--correct {
   border-color: var(--pass);

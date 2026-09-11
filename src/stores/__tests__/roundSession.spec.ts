@@ -142,6 +142,23 @@ describe('round store', () => {
     expect(round.round!.lastGain).toBe(15) // base 10 + sprint 5, streak 1
   })
 
+  it('(e2) a Sprint timeout is an incorrect Answer even when the pick was right (ADR-0004)', async () => {
+    const progress = useProgressStore()
+    const round = useRoundStore()
+    round.startRound('sprint', MONITORING)
+    const q = round.currentQuestion!
+    round.setPicked([...q.correct])
+    expect(round.canSubmit).toBe(true) // a complete, correct selection — but time ran out
+
+    await round.timeout()
+    expect(progress.answers.at(-1)).toMatchObject({ questionId: q.id, correct: false, xp: 0 })
+    expect(progress.answers.at(-1)!.selected).toEqual([...q.correct])
+    expect(round.round!.streak).toBe(0)
+    expect(round.round!.lastCorrect).toBe(false)
+    expect(round.round!.timedOut).toBe(true)
+    expect(useProgressStore().deck.map((d) => d.id)).toContain(q.id)
+  })
+
   it('(f) exit completes the Session mid-Round, and is a no-op before any Answer', async () => {
     const progress = useProgressStore()
     const round = useRoundStore()

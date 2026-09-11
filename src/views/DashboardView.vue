@@ -78,7 +78,7 @@ function drill(topic: TopicId): void {
     <h1 class="hero">Level up your Azure fundamentals.</h1>
     <p class="hero__lede">
       {{ progress.questions.length }} original questions across all three AZ-900 domains. Ten at a time, one per
-      screen — Streaks multiply your XP.
+      screen — Streaks grow your XP bonus.
     </p>
 
     <div class="stats">
@@ -150,12 +150,6 @@ function drill(topic: TopicId): void {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
-}
-.tile__value--gold {
-  color: var(--gold);
-}
-.tile__value--accent {
-  color: var(--accent);
 }
 .panels {
   display: grid;

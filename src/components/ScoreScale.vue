@@ -77,7 +77,7 @@ const ariaLabel = computed(
   height: 0.85rem;
   margin-top: 1.1rem;
   border-radius: 999px;
-  background: var(--accent-soft);
+  background: var(--track);
   overflow: visible;
 }
 

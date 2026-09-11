@@ -13,16 +13,22 @@ export function shuffleInPlace<T>(items: T[], rng: () => number = Math.random): 
   return items
 }
 
-export function drawExamQuestions(
-  bank: Question[],
-  answers: Answer[],
-  rng: () => number = Math.random,
-): string[] {
+/** Question id → the timestamp of its most recent Answer. Drives every "least recently seen" draw. */
+export function lastSeenByQuestion(answers: Answer[]): Map<string, string> {
   const lastSeen = new Map<string, string>()
   for (const answer of answers) {
     const prev = lastSeen.get(answer.questionId)
     if (!prev || answer.submittedAt > prev) lastSeen.set(answer.questionId, answer.submittedAt)
   }
+  return lastSeen
+}
+
+export function drawExamQuestions(
+  bank: Question[],
+  answers: Answer[],
+  rng: () => number = Math.random,
+): string[] {
+  const lastSeen = lastSeenByQuestion(answers)
   const drawn: string[] = []
   for (const domain of Object.keys(DOMAINS) as DomainId[]) {
     // Shuffle first so the stable sort breaks ties randomly.

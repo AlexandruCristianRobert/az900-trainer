@@ -67,7 +67,7 @@ function itemLabel(index: number): string {
 .grid-item--answered {
   background: var(--accent-soft);
   border-color: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .grid-item--current {

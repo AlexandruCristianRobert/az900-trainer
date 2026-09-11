@@ -11,6 +11,15 @@ import { routes } from '@/router'
 import { useProgressStore } from '@/stores/progress'
 
 const realSetTimeout = globalThis.setTimeout
+const realDateNow = Date.now.bind(Date)
+
+/**
+ * RoundView's primary() drops a second activation inside PRIMARY_GRACE_MS, and a test
+ * clicks Submit then Next microseconds apart. `settle()` steps this offset past the
+ * grace window (Date.now is stubbed below) so consecutive clicks read as deliberate.
+ */
+let clockOffsetMs = 0
+const GRACE_STEP_MS = 400
 
 const RouterHost = defineComponent({ name: 'RouterHost', setup: () => () => h(RouterView) })
 
@@ -48,6 +57,7 @@ function poolLabelOf(wrapper: VueWrapper): string {
 }
 
 async function settle(): Promise<void> {
+  clockOffsetMs += GRACE_STEP_MS
   await new Promise((resolve) => realSetTimeout(resolve, 0))
   await nextTick()
 }
@@ -103,8 +113,16 @@ async function seedIncorrect(q: Question): Promise<void> {
 const MONITORING = questionBank.filter((q) => q.topic === 'monitoring-tools') // 7
 
 describe('RoundView', () => {
-  beforeEach(() => localStorage.clear())
-  afterEach(() => vi.useRealTimers())
+  beforeEach(() => {
+    localStorage.clear()
+    clockOffsetMs = 0
+    // Real timers still run the microtask/macrotask queues; only the wall clock moves.
+    vi.spyOn(Date, 'now').mockImplementation(() => realDateNow() + clockOffsetMs)
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
 
   it('(a) shows the empty state when the review deck is empty', async () => {
     const { wrapper } = await mountRoute('/review')

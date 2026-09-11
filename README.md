@@ -3,7 +3,7 @@
 ## 1. What it is
 
 AZ-900 Trainer is a local-first Vue 3 study app for the Microsoft Azure Fundamentals (AZ-900) exam: an
-original question bank drilled in 10-question **Rounds** (Practice, Sprint, Review) that earn **XP**,
+original question bank drilled in **Rounds** of up to 10 questions (Practice, Sprint, Review) that earn **XP**,
 **Streaks** and **Levels**, plus a full timed exam simulation and weak-area analytics.
 
 > Unofficial study aid. Not affiliated with or endorsed by Microsoft. All questions are original,
@@ -16,8 +16,8 @@ shown in the app's footer on every page.
 
 - **Rounds** — Practice, Sprint and Review each draw up to 10 Questions (never-answered first, then
   least-recently-answered), answered one per screen, ended by a results page. Rounds are never resumed.
-- **XP, Streak, Level** — a correct Answer earns 10 XP, +2 per consecutive correct Answer in the Round
-  (capped at +10), +5 in a Sprint; exam Answers earn a flat 10. XP is stamped on each Answer when it is
+- **XP, Streak, Level** — a correct Answer earns 10 XP, +2 for each consecutive correct Answer after the
+  first (capped at +10), +5 in a Sprint; exam Answers earn a flat 10. XP is stamped on each Answer when it is
   written (see [ADR-0005](docs/adr/0005-xp-is-stamped-on-each-answer.md)). Levels need 150 XP, then 50
   more each level. Best Streak and Level are read off the Answer log, never stored.
 - **Sprint** — every Question runs against a 20-second Shot clock. A timeout records an incorrect Answer
@@ -134,7 +134,7 @@ Supabase adapter can be dropped in later without a data migration. To add one:
    repository to load it in — `replaceAll` is the same call either way, so previously exported
    Sessions/Answers import cleanly once the swap is made.
 
-## 7. Deliberately out of v1
+## 7. Deliberately out of v2
 
 Sound effects, confetti, daily goals or calendar streaks, Round history list, Topic picker, light theme,
 flag-for-review, per-question timing stats, drag-drop/hot-area item types, PWA/offline manifest, spaced

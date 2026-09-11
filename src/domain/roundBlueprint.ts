@@ -1,7 +1,7 @@
 import { DOMAINS, TOPICS, type DomainId, type Question, type TopicId } from '@/data/types'
 import { reviewDeck } from './analytics'
 import type { Answer } from './entities'
-import { shuffleInPlace } from './examBlueprint'
+import { lastSeenByQuestion, shuffleInPlace } from './examBlueprint'
 
 /** A Round is a fixed draw of up to 10 Questions (CONTEXT.md: Round). */
 export const ROUND_SIZE = 10
@@ -33,11 +33,7 @@ export function resolvePool(bank: Question[], answers: Answer[], spec: PoolSpec)
  * ROUND_SIZE — the exam blueprint's per-domain rule, applied to one Pool.
  */
 export function drawRound(pool: Question[], answers: Answer[], rng: () => number = Math.random): string[] {
-  const lastSeen = new Map<string, string>()
-  for (const answer of answers) {
-    const prev = lastSeen.get(answer.questionId)
-    if (!prev || answer.submittedAt > prev) lastSeen.set(answer.questionId, answer.submittedAt)
-  }
+  const lastSeen = lastSeenByQuestion(answers)
   const fresh = shuffleInPlace(pool.filter((q) => !lastSeen.has(q.id)), rng)
   const seen = shuffleInPlace(pool.filter((q) => lastSeen.has(q.id)), rng).sort((a, b) => {
     const seenA = lastSeen.get(a.id)!

@@ -69,7 +69,8 @@ export const useRoundStore = defineStore('roundSession', () => {
     // Leaving mid-Round completes the Session with whatever Answers exist. finish()
     // detaches the old Round and nulls `round` synchronously, before the assignment
     // below, so its completion still lands on the Round this one replaces.
-    void finish()
+    // Swallowed: a failed close of the old Session must not stop the new Round.
+    void finish().catch(() => {})
     const questionIds = drawRound(resolvePool(progress.questions, progress.answers, pool), progress.answers)
     if (questionIds.length === 0) {
       round.value = null
@@ -115,7 +116,8 @@ export const useRoundStore = defineStore('roundSession', () => {
   /** Grades synchronously (the screen updates now); the writes are queued. */
   function grade(r: RoundState, q: Question, timedOut: boolean): void {
     const selected = r.picked.slice()
-    const correct = isCorrect(q, selected)
+    // A Shot clock timeout is always an incorrect Answer, however right the pick was (ADR-0004).
+    const correct = timedOut ? false : isCorrect(q, selected)
     const streak = correct ? r.streak + 1 : 0
     const xp = xpForAnswer(r.mode, correct, streak)
     r.results.push({ questionId: q.id, selected, correct, xp })
@@ -127,14 +129,18 @@ export const useRoundStore = defineStore('roundSession', () => {
     r.timedOut = timedOut
     r.graded = true
     r.shotClockDeadline = null
-    pending = pending.then(async () => {
-      const sessionId = await ensureSession(r)
-      const answer: Answer = {
-        id: crypto.randomUUID(), sessionId, questionId: q.id, selected, correct,
-        submittedAt: new Date().toISOString(), xp,
-      }
-      await progress.recordAnswers([answer])
-    })
+    // Swallowed, not propagated: a rejected write must never poison later Rounds
+    // by leaving a rejected promise in the chain everything after it awaits.
+    pending = pending
+      .then(async () => {
+        const sessionId = await ensureSession(r)
+        const answer: Answer = {
+          id: crypto.randomUUID(), sessionId, questionId: q.id, selected, correct,
+          submittedAt: new Date().toISOString(), xp,
+        }
+        await progress.recordAnswers([answer])
+      })
+      .catch(() => {})
   }
 
   async function submit(): Promise<string | null> {

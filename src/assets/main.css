@@ -14,19 +14,29 @@
   --accent-hover: #7c4ddb;
   --accent-text: #c4b5fd;
   --accent-soft: rgb(139 92 246 / 0.12);
+  --accent-strong: rgb(139 92 246 / 0.18);
+  --accent-deep: #6d28d9;
   --accent-ink: #ffffff;
   --gold: #ffc53d;
   --gold-deep: #ff9f1c;
   --gold-soft: rgb(255 197 61 / 0.12);
+  --gold-soft-strong: rgb(255 197 61 / 0.16);
   --cyan: #22d3ee;
   --cyan-soft: rgb(34 211 238 / 0.12);
   --pass: #34d399;
   --pass-ink: #0b2b1e;
   --pass-soft: rgb(52 211 153 / 0.1);
+  --pass-soft-strong: rgb(52 211 153 / 0.14);
   --fail: #f87171;
   --fail-ink: #3a0d0d;
   --fail-soft: rgb(248 113 113 / 0.08);
+  --fail-soft-strong: rgb(248 113 113 / 0.12);
   --warn: #ffc53d;
+  --level-badge-bg: #2a2338;
+  --level-badge-line: #4a3a68;
+  --seg-done: #4a4a66;
+  --weak-bg: #221a26;
+  --weak-line: #4a2e38;
   --radius: 12px;
   --radius-large: 14px;
   --radius-small: 8px;
@@ -153,6 +163,32 @@ a:hover {
   font-weight: 600;
   color: var(--ink-muted);
 }
+.tile__value--gold {
+  color: var(--gold);
+}
+.tile__value--accent {
+  color: var(--accent);
+}
+/* The results tile row. The dashboard's `.stats` grid is its own, denser, thing. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.panel {
+  padding: 24px;
+}
+.panel__title {
+  margin: 0 0 20px;
+  font-size: 11px;
+}
+.panel__empty {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
 
 .eyebrow {
   font-family: var(--font-mono);
@@ -161,6 +197,9 @@ a:hover {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-muted);
+}
+.section-title {
+  margin: 40px 0 14px;
 }
 
 .mono {
@@ -216,11 +255,22 @@ a:hover {
 .btn-outline:hover:not(:disabled) {
   background: color-mix(in srgb, var(--btn-color) 12%, transparent);
 }
+.btn-outline--gold {
+  --btn-color: var(--gold);
+}
 .btn-small {
   padding: 7px 14px;
   font-size: 12px;
   font-weight: 700;
   border-radius: var(--radius-small);
+}
+
+/* The button row a results page ends on. */
+.results-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 32px;
 }
 
 .chip {

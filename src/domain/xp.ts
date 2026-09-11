@@ -40,10 +40,14 @@ export function levelOf(total: number): LevelProgress {
   return { level, into, need }
 }
 
-/** Legacy Answers (no xp field) count as zero; dangling Answers still count — earned is earned. */
+/**
+ * Legacy Answers (no xp field) count as zero, and so does anything an imported
+ * file put there that is not a finite number; dangling Answers still count —
+ * earned is earned.
+ */
 export function totalXp(answers: Answer[]): number {
   let sum = 0
-  for (const answer of answers) sum += answer.xp ?? 0
+  for (const answer of answers) sum += Number.isFinite(answer.xp) ? (answer.xp as number) : 0
   return sum
 }
 

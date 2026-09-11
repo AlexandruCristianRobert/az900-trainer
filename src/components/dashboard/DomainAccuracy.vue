@@ -22,13 +22,6 @@ defineProps<{ rows: { domain: DomainId; label: string; percent: number | null; a
 </template>
 
 <style scoped>
-.panel {
-  padding: 24px;
-}
-.panel__title {
-  margin: 0 0 20px;
-  font-size: 11px;
-}
 .domain-accuracy {
   display: flex;
   flex-direction: column;

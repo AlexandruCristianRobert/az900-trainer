@@ -49,7 +49,11 @@ const newRoundPath = computed(() => `/${props.session.mode}`)
 
     <div class="results-actions">
       <RouterLink class="btn btn-primary" :to="newRoundPath">New round</RouterLink>
-      <RouterLink v-if="hasMissed" class="btn btn-outline btn-outline--gold" to="/review">
+      <RouterLink
+        v-if="hasMissed && session.mode !== 'review'"
+        class="btn btn-outline btn-outline--gold"
+        to="/review"
+      >
         Start review
       </RouterLink>
       <RouterLink class="btn btn-ghost" to="/">Dashboard</RouterLink>
@@ -63,7 +67,7 @@ const newRoundPath = computed(() => `/${props.session.mode}`)
   margin-bottom: 28px;
   border: 1px solid var(--gold);
   border-radius: var(--radius-large);
-  background: linear-gradient(135deg, rgb(255 197 61 / 0.16), rgb(139 92 246 / 0.16));
+  background: linear-gradient(135deg, var(--gold-soft-strong), var(--accent-strong));
   animation: pop var(--dur) ease-out;
 }
 .level-up__text {
@@ -90,29 +94,5 @@ const newRoundPath = computed(() => `/${props.session.mode}`)
   margin: 0;
   font-size: clamp(24px, 3.6vw, 34px);
   font-weight: 900;
-}
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  margin-top: 30px;
-}
-.tile__value--gold {
-  color: var(--gold);
-}
-.tile__value--accent {
-  color: var(--accent);
-}
-.section-title {
-  margin: 40px 0 14px;
-}
-.results-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 32px;
-}
-.btn-outline--gold {
-  --btn-color: var(--gold);
 }
 </style>

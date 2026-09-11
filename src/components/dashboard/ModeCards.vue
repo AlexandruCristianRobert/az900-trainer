@@ -30,10 +30,12 @@ const SHOT_CLOCK_SECONDS = SHOT_CLOCK_MS / 1000
   <div class="mode-cards">
     <section class="card mode-card mode-card--practice">
       <h2 class="mode-card__title"><span class="mode-card__dot" aria-hidden="true"></span>Practice round</h2>
-      <p class="mode-card__lede">{{ ROUND_SIZE }} questions with Streak bonuses and an explanation for every option.</p>
+      <p class="mode-card__lede">
+        Up to {{ ROUND_SIZE }} questions with Streak bonuses and an explanation for every option.
+      </p>
       <div>
-        <div class="eyebrow mode-card__label">Domains</div>
-        <div class="chips">
+        <div id="mode-domains-label" class="eyebrow mode-card__label">Domains</div>
+        <div class="chips" role="group" aria-labelledby="mode-domains-label">
           <button
             v-for="chip in CHIPS"
             :key="chip.id"
@@ -47,8 +49,8 @@ const SHOT_CLOCK_SECONDS = SHOT_CLOCK_MS / 1000
         </div>
       </div>
       <div>
-        <div class="eyebrow mode-card__label">Feedback</div>
-        <div class="segmented">
+        <div id="mode-feedback-label" class="eyebrow mode-card__label">Feedback</div>
+        <div class="segmented" role="group" aria-labelledby="mode-feedback-label">
           <button
             v-for="timing in TIMINGS"
             :key="timing.id"
@@ -162,7 +164,7 @@ const SHOT_CLOCK_SECONDS = SHOT_CLOCK_MS / 1000
 }
 .chip-button[aria-pressed='true'] {
   border-color: var(--accent);
-  background: rgb(139 92 246 / 0.2);
+  background: var(--accent-strong);
   color: var(--accent-text);
 }
 .segmented {
@@ -186,6 +188,6 @@ const SHOT_CLOCK_SECONDS = SHOT_CLOCK_MS / 1000
 }
 .segmented__option[aria-pressed='true'] {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 </style>

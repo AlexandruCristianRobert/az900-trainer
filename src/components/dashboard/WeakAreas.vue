@@ -23,18 +23,6 @@ const emit = defineEmits<{ drill: [TopicId] }>()
 </template>
 
 <style scoped>
-.panel {
-  padding: 24px;
-}
-.panel__title {
-  margin: 0 0 20px;
-  font-size: 11px;
-}
-.panel__empty {
-  margin: 0;
-  color: var(--ink-muted);
-  font-size: 14px;
-}
 .weak-list {
   display: flex;
   flex-direction: column;
@@ -47,9 +35,9 @@ const emit = defineEmits<{ drill: [TopicId] }>()
   gap: 12px;
   width: 100%;
   padding: 11px 14px;
-  border: 1px solid #4a2e38;
+  border: 1px solid var(--weak-line);
   border-radius: 10px;
-  background: #221a26;
+  background: var(--weak-bg);
   color: var(--ink);
   font: inherit;
   text-align: left;

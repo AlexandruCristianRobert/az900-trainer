@@ -66,9 +66,9 @@ const percent = computed(() => Math.round((progress.value.into / progress.value.
   display: inline-flex;
   align-items: center;
   padding: 6px 10px;
-  border: 1px solid #4a3a68;
+  border: 1px solid var(--level-badge-line);
   border-radius: 999px;
-  background: #2a2338;
+  background: var(--level-badge-bg);
   color: var(--gold);
   font-size: 12px;
   font-weight: 700;

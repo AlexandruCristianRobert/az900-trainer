@@ -155,18 +155,6 @@ const rows = computed(() => examBreakdownRows(props.session, progress.answers, p
   color: var(--ink-muted);
   font-size: 12px;
 }
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 14px;
-  margin-top: 30px;
-}
-.tile__value--gold {
-  color: var(--gold);
-}
-.section-title {
-  margin: 40px 0 14px;
-}
 .domain-section {
   padding: 24px;
   margin-top: 30px;
@@ -201,14 +189,5 @@ const rows = computed(() => examBreakdownRows(props.session, progress.answers, p
   border-radius: 999px;
   background: var(--accent);
   transition: width var(--dur);
-}
-.results-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-top: 32px;
-}
-.btn-outline--gold {
-  --btn-color: var(--gold);
 }
 </style>
