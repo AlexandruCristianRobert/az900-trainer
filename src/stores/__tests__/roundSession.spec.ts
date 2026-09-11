@@ -14,7 +14,9 @@ function byId(id: string): Question {
   return questionBank.find((q) => q.id === id)!
 }
 function wrongPick(q: Question): string[] {
-  return q.options.filter((o) => !q.correct.includes(o.id)).slice(0, q.correct.length).map((o) => o.id)
+  const wrong = q.options.filter((o) => !q.correct.includes(o.id))
+  const filler = q.options.filter((o) => q.correct.includes(o.id))
+  return [...wrong, ...filler].slice(0, q.correct.length).map((o) => o.id)
 }
 async function seedIncorrect(questionId: string): Promise<void> {
   const now = new Date().toISOString()

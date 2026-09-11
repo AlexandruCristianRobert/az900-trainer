@@ -3,8 +3,8 @@
 ## 1. What it is
 
 AZ-900 Trainer is a local-first Vue 3 study app for the Microsoft Azure Fundamentals (AZ-900) exam: an
-original question bank, practiced through a timed exam simulation, per-domain/per-topic practice with
-instant feedback, a review deck of previously missed questions, and weak-area analytics.
+original question bank drilled in 10-question **Rounds** (Practice, Sprint, Review) that earn **XP**,
+**Streaks** and **Levels**, plus a full timed exam simulation and weak-area analytics.
 
 > Unofficial study aid. Not affiliated with or endorsed by Microsoft. All questions are original,
 > written from the public AZ-900 study guide objectives.
@@ -14,20 +14,25 @@ shown in the app's footer on every page.
 
 ## 2. Features
 
-- **Exam simulation** — a fixed 40-question, 45:00 timed exam (domain split 12/15/13, sampled
-  least-recently-answered-first per domain, no repeats within a session). Results show an **Estimated
-  score** (`round(1000 × correct / 40)`) against the 700 pass line, always captioned as an estimate
-  since Microsoft's real scaled-scoring model is unpublished.
-- **Practice by domain/topic** — filter Questions by Domain or Topic, submit one at a time, and see
-  instant grading with a per-option explanation for every choice.
-- **Review deck** — the set of Questions whose latest Answer (in any mode) was incorrect. Membership is
-  binary, not spaced repetition: one correct Answer removes a Question, one incorrect Answer readds it.
-  See [ADR-0001](docs/adr/0001-review-deck-is-binary-membership-not-spaced-repetition.md).
-- **Weak-area analytics** — a Topic is flagged weak once it has at least 4 submitted Answers and
-  accuracy below 70%; with fewer than 4 Answers a Topic shows "not enough data" rather than a verdict.
-- **Export / import / reset** — from the dashboard's data section: "Export progress" downloads all
-  Sessions and Answers as JSON, "Import progress" replaces current data from a chosen file, and "Reset
-  all progress" clears Sessions and Answers (never Questions) after a confirm step.
+- **Rounds** — Practice, Sprint and Review each draw up to 10 Questions (never-answered first, then
+  least-recently-answered), answered one per screen, ended by a results page. Rounds are never resumed.
+- **XP, Streak, Level** — a correct Answer earns 10 XP, +2 per consecutive correct Answer in the Round
+  (capped at +10), +5 in a Sprint; exam Answers earn a flat 10. XP is stamped on each Answer when it is
+  written (see [ADR-0005](docs/adr/0005-xp-is-stamped-on-each-answer.md)). Levels need 150 XP, then 50
+  more each level. Best Streak and Level are read off the Answer log, never stored.
+- **Sprint** — every Question runs against a 20-second Shot clock. A timeout records an incorrect Answer
+  with whatever was picked, possibly nothing (see
+  [ADR-0004](docs/adr/0004-sprint-timeout-is-an-incorrect-answer.md)).
+- **Feedback timing** — Practice Rounds reveal after each Answer (default) or only on the results page.
+  Sprint and Review always reveal. Remembered per device with the Domain chip, outside the progress file.
+- **Weak areas** — a Topic is flagged weak once it has at least 4 Answers and accuracy below 70%; tapping a
+  weak area starts a Practice Round on that Topic. That is the only way to a Topic Pool.
+- **Review deck** — the Questions whose latest Answer was incorrect; one correct Answer clears each
+  ([ADR-0001](docs/adr/0001-review-deck-is-binary-membership-not-spaced-repetition.md)).
+- **Exam simulation** — unchanged 40-question, 45:00 exam with an Estimated score against the 700 pass
+  line, reached from the strip under the mode cards; its score history lives on the exam setup screen.
+- **Export / import / reset** — from the data row at the bottom of the dashboard. Preferences are not
+  included and not reset.
 
 ## 3. Getting started
 
@@ -50,6 +55,10 @@ browsers, and clearing site data erases it. "Export progress" and "Import progre
 safety net: export before clearing site data or switching browsers, then import to restore. See
 [ADR-0002](docs/adr/0002-local-first-storage-behind-a-repository-seam.md) for why storage was built this
 way.
+
+Per-device preferences (Feedback timing, Domain chip) live under a second key,
+`az900-trainer/preferences/v1`, also private to `LocalStorageRepository`. They are not exported and not
+cleared by reset.
 
 ## 5. Editing the question bank
 
@@ -93,12 +102,13 @@ Supabase adapter can be dropped in later without a data migration. To add one:
 
 1. **Create a Supabase project** and note its project URL and anon key.
 2. **Create `sessions` and `answers` tables** mirroring the shapes in `src/domain/entities.ts`:
-   - `sessions`: `id` (uuid, primary key), `mode` (text: `exam` | `practice` | `review`), `status`
-     (text: `in-progress` | `completed` | `expired`), `started_at` (timestamptz), `ended_at`
+   - `sessions`: `id` (uuid, primary key), `mode` (text: `exam` | `practice` | `sprint` | `review`),
+     `status` (text: `in-progress` | `completed` | `expired`), `started_at` (timestamptz), `ended_at`
      (timestamptz, nullable), `exam` (jsonb, nullable — holds `{ deadline, questionIds, selections }`
      for exam Sessions).
    - `answers`: `id` (uuid, primary key), `session_id` (uuid, references `sessions.id`), `question_id`
-     (text), `selected` (text[]), `correct` (boolean), `submitted_at` (timestamptz).
+     (text), `selected` (text[]), `correct` (boolean), `submitted_at` (timestamptz), `xp` (integer,
+     nullable).
    All runtime IDs are already `crypto.randomUUID()` and all timestamps are already ISO-8601 UTC
    strings, so no format translation is needed between what the app produces today and these column
    types.
@@ -126,5 +136,6 @@ Supabase adapter can be dropped in later without a data migration. To add one:
 
 ## 7. Deliberately out of v1
 
+Sound effects, confetti, daily goals or calendar streaks, Round history list, Topic picker, light theme,
 flag-for-review, per-question timing stats, drag-drop/hot-area item types, PWA/offline manifest, spaced
 repetition, Supabase sync, question-feedback workflow.
